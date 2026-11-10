@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { BuatLaporanInputSchema } from '@/lib/contracts/laporan';
 import { apiSukses, apiError } from '@/lib/server/response';
-import { periksaKontenLaporan } from '@/lib/server/sanitizer';
+import { evaluasiLaporanCerdas } from '@/lib/server/sanitizer';
 import { periksaRateLimit, hashIP } from '@/lib/server/rate-limit';
 import { dapatkanKonteksAuth } from '@/lib/server/auth';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
-    // 4. Lapisan Validasi Rule-Based Konten (hanya menandai, tidak menolak)
-    const validasiKonten = periksaKontenLaporan(data.judul, data.deskripsi);
+    // 4. Lapisan Validasi Cerdas (Rule-Based + AI Generatif Fallback)
+    const validasiKonten = await evaluasiLaporanCerdas(data.judul, data.deskripsi);
 
     // 5. Lookup dinas_id dari kategori_id
     const { data: kategoriData, error: errKat } = await supabaseAdmin
