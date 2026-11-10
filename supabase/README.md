@@ -15,7 +15,7 @@ Seluruh berkas SQL di folder `supabase/migrations/` disusun secara terurut dan b
 7. `007_tabel_audit_data.sql` — Tabel `audit_log`, `data_penduduk_resmi`, dan `rekap_ulas`.
 8. `008_views_functions.sql` — View publik `laporan_publik` (bebas PII) dan fungsi RPC dashboard.
 9. `009_rls_policies.sql` — Row Level Security aktif pada **100% tabel** dengan kebijakan *default deny*.
-10. `010_seed_referensi.sql` — Data awal resmi: 3 dinas, 6 kategori aduan, 5 kecamatan, dan 54 kelurahan lengkap.
+10. `010_seed_referensi.sql` — Data awal resmi: 4 dinas (DPUPR, Dishub, DLH, Satpol PP), 6 kategori aduan, 5 kecamatan, dan 54 kelurahan lengkap.
 11. `011_indexes.sql` — Indeks spasial GIST, B-tree komposit (status, waktu), dan GIN full-text search.
 12. `013_update_data_penduduk.sql` — Sinkronisasi jumlah penduduk Dispendukcapil Surakarta (Semester 2 2023).
 13. `015_insert_rekap_ulas.sql` — Rekapitulasi agregat resmi aduan ULAS 2023 dari Portal Data Jateng.
