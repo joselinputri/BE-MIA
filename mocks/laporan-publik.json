@@ -1,0 +1,135 @@
+[
+  {
+    "id": "s0000000-0000-0000-0000-000000000088",
+    "kode_lacak": "RMP-2025-088",
+    "judul": "Jalan Berlubang Aspal Ambles Kedalaman 12cm",
+    "deskripsi": "Laporan dari warga terverifikasi melalui kanal Siaga RAMPUNG Surakarta. Disposisi otomatis menuju UPT Jalan Wilayah Barat DPUPR. Lokasi: Jl. Slamet Riyadi No. 410, Laweyan.",
+    "kategori": "Penambalan Aspal",
+    "kategori_slug": "penambalan-aspal",
+    "kategori_ikon": "hammer",
+    "kelurahan": "Sriwedari",
+    "kelurahan_kode": "33.72.01.1002",
+    "kecamatan": "Laweyan",
+    "kecamatan_kode": "33.72.01",
+    "latitude": -7.5684,
+    "longitude": 110.8122,
+    "status": "selesai",
+    "penanda": [],
+    "foto_sebelum_paths": [
+      "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop"
+    ],
+    "foto_sesudah_paths": [
+      "https://images.unsplash.com/photo-1541888946425-d0fbb1861593?w=800&auto=format&fit=crop"
+    ],
+    "is_anonim": false,
+    "is_simulasi": true,
+    "provenance": "simulasi_terkalibrasi",
+    "dinas": "Dinas Pekerjaan Umum & Penataan Ruang",
+    "dinas_singkatan": "DPUPR",
+    "jumlah_dukungan": 47,
+    "konfirmasi_jawaban": null,
+    "catatan_teknis": {
+      "regu_pelaksana": "Tim Reaksi Cepat 3 (Kec. Laweyan)",
+      "mandor": "Bambang Triyono, S.T.",
+      "surat_tugas": "SK-2025-UPTD-BARAT",
+      "spesifikasi_material": "Aspal Hotmix HRS-Base 1.2 Ton, Prime Coat 15 Liter, Kompaksi 98%",
+      "kondisi_cuaca": "Cerah Berawan",
+      "waktu_respon_awal": "2 Jam 33 Menit",
+      "biaya_logistik": "Rp 1.450.000",
+      "sumber_dana": "APBD Pemeliharaan Jalan",
+      "indeks_kepuasan_wilayah": 94.8
+    },
+    "linimasa": [
+      {
+        "tahap": 1,
+        "status_ke": "masuk",
+        "judul_tahap": "Diterima",
+        "catatan": "Terdata di SI-ADUAN Siaga RAMPUNG Surakarta",
+        "created_at": "2025-10-23T08:12:00.000Z"
+      },
+      {
+        "tahap": 2,
+        "status_ke": "ditinjau",
+        "judul_tahap": "Dicek OPD",
+        "catatan": "Disposisi DPUPR dan verifikasi titik geotag",
+        "created_at": "2025-10-23T10:45:00.000Z"
+      },
+      {
+        "tahap": 3,
+        "status_ke": "sedang_ditangani",
+        "judul_tahap": "Dikerjakan",
+        "catatan": "Regu Reaksi Cepat 3 melakukan pengikisan dan pemadatan aspal",
+        "created_at": "2025-10-24T14:20:00.000Z"
+      },
+      {
+        "tahap": 4,
+        "status_ke": "selesai",
+        "judul_tahap": "Konfirmasi",
+        "catatan": "Menunggu Validasi Warga (Audit Gotong Royong)",
+        "created_at": "2025-10-24T16:00:00.000Z"
+      }
+    ],
+    "created_at": "2025-10-23T08:10:00.000Z",
+    "updated_at": "2025-10-24T16:00:00.000Z"
+  },
+  {
+    "id": "s0000000-0000-0000-0000-000000000094",
+    "kode_lacak": "RMP-2025-094",
+    "judul": "Lampu PJU Padam 4 Titik",
+    "deskripsi": "Lampu penerangan jalan padam di Jl. Kolonel Sutarto, Jebres.",
+    "kategori": "Lampu PJU",
+    "kategori_slug": "lampu-pju",
+    "kategori_ikon": "lightbulb",
+    "kelurahan": "Jebres",
+    "kelurahan_kode": "33.72.04.1006",
+    "kecamatan": "Jebres",
+    "kecamatan_kode": "33.72.04",
+    "latitude": -7.5585,
+    "longitude": 110.8451,
+    "status": "sedang_ditangani",
+    "penanda": [],
+    "foto_sebelum_paths": [
+      "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=800&auto=format&fit=crop"
+    ],
+    "foto_sesudah_paths": [],
+    "is_anonim": false,
+    "is_simulasi": true,
+    "provenance": "simulasi_terkalibrasi",
+    "dinas": "Dinas Perhubungan",
+    "dinas_singkatan": "Dishub",
+    "jumlah_dukungan": 19,
+    "konfirmasi_jawaban": null,
+    "created_at": "2025-10-24T18:30:00.000Z",
+    "updated_at": "2025-10-25T09:15:00.000Z"
+  },
+  {
+    "id": "s0000000-0000-0000-0000-000000000102",
+    "kode_lacak": "RMP-2025-102",
+    "judul": "Sedimen Drainase Meluap",
+    "deskripsi": "Saluran air tersumbat material endapan di Simpang Pasar Kembang, Serengan.",
+    "kategori": "Drainase & Saluran Air",
+    "kategori_slug": "drainase",
+    "kategori_ikon": "droplets",
+    "kelurahan": "Serengan",
+    "kelurahan_kode": "33.72.02.1005",
+    "kecamatan": "Serengan",
+    "kecamatan_kode": "33.72.02",
+    "latitude": -7.5791,
+    "longitude": 110.8194,
+    "status": "ditinjau",
+    "penanda": [],
+    "foto_sebelum_paths": [
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop"
+    ],
+    "foto_sesudah_paths": [],
+    "is_anonim": true,
+    "is_simulasi": true,
+    "provenance": "simulasi_terkalibrasi",
+    "dinas": "Dinas Pekerjaan Umum & Penataan Ruang",
+    "dinas_singkatan": "DPUPR",
+    "jumlah_dukungan": 31,
+    "konfirmasi_jawaban": null,
+    "created_at": "2025-10-25T11:00:00.000Z",
+    "updated_at": "2025-10-25T11:45:00.000Z"
+  }
+]

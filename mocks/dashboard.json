@@ -1,0 +1,51 @@
+{
+  "ringkasan": {
+    "laporan_bulan_ini": 57,
+    "laporan_selesai": 49,
+    "persentase_selesai": 85.9,
+    "sedang_dikerjakan": 8,
+    "rata_rata_harian": 35,
+    "kinerja_dinas": [
+      {
+        "singkatan": "DPUPR",
+        "nama": "Dinas Pekerjaan Umum & Penataan Ruang (DPUPR)",
+        "rata_hari": 1.1,
+        "persen_tuntas": 98.0
+      },
+      {
+        "singkatan": "Dishub",
+        "nama": "Dinas Perhubungan (Dishub)",
+        "rata_hari": 1.3,
+        "persen_tuntas": 96.5
+      },
+      {
+        "singkatan": "DLH",
+        "nama": "Dinas Lingkungan Hidup (DLH)",
+        "rata_hari": 1.6,
+        "persen_tuntas": 94.0
+      },
+      {
+        "singkatan": "Satpol PP",
+        "nama": "Satuan Polisi Pamong Praja (Satpol PP)",
+        "rata_hari": 1.8,
+        "persen_tuntas": 89.2
+      }
+    ]
+  },
+  "tren": [
+    { "bulan": "2026-08-01", "jumlah_masuk": 45, "jumlah_selesai": 38, "jumlah_ditolak": 2, "jumlah_aktif": 5, "provenance_campuran": true },
+    { "bulan": "2026-09-01", "jumlah_masuk": 52, "jumlah_selesai": 46, "jumlah_ditolak": 1, "jumlah_aktif": 5, "provenance_campuran": true },
+    { "bulan": "2026-10-01", "jumlah_masuk": 57, "jumlah_selesai": 49, "jumlah_ditolak": 3, "jumlah_aktif": 8, "provenance_campuran": true }
+  ],
+  "konfirmasi": {
+    "total_selesai": 145,
+    "total_dikonfirmasi": 128,
+    "persen_dikonfirmasi": 88.2,
+    "persen_puas": 89.5,
+    "persen_biasa": 8.2,
+    "persen_kurang_puas": 2.3,
+    "total_dibuka_ulang": 4,
+    "persen_dibuka_ulang": 2.7
+  }
+}
+

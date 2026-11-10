@@ -1,0 +1,35 @@
+{
+  "name": "rampung-surakarta",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "etl:penduduk": "ts-node scripts/data/01_impor_penduduk.ts",
+    "etl:geojson": "ts-node scripts/data/02_impor_geojson.ts",
+    "etl:ulas": "ts-node scripts/data/03_impor_ulas.ts",
+    "etl:seed-simulasi": "ts-node scripts/data/04_generator_simulasi.ts",
+    "etl:validasi": "ts-node scripts/data/05_validasi.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.48.1",
+    "next": "14.2.23",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.33.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^20.17.16",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
+
