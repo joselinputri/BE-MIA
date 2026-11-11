@@ -11,6 +11,9 @@ Buat berkas `.env.local` di root proyek. **Hanya gunakan variabel berawalan `NEX
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
+# Mode Mock: set true untuk dev offline, set false di staging/produksi
+NEXT_PUBLIC_USE_MOCK=false
+
 # Supabase Client SDK (Aman di Client-Side)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
@@ -21,6 +24,48 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
 
 > [!CAUTION]
 > **JANGAN PERNAH** memanggil atau mengimpor `SUPABASE_SERVICE_ROLE_KEY` di file antarmuka (komponen `'use client'`). Kunci tersebut khusus sisi server.
+
+---
+
+## 1.1. Alur Upload & Pembacaan Foto (Supabase Storage)
+
+Backend telah menyiapkan bucket Supabase Storage bernama **`laporan-foto`** dengan dua folder terisolasi:
+- `sebelum/` : Foto kondisi awal saat warga membuat aduan (diakses publik/warga).
+- `sesudah/` : Foto bukti perbaikan fisik yang hanya dapat diunggah oleh **Petugas/Admin**.
+
+### Cara Upload dari Frontend:
+FE dapat memilih salah satu dari 2 cara yang didukung penuh:
+
+#### Opsi 1: Menggunakan SDK `rampungApi` (Paling Praktis)
+```typescript
+import { rampungApi, dapatkanUrlFoto } from '@/lib/client/api-client';
+
+// 1. Upload foto sebelum (Warga)
+const res = await rampungApi.laporan.uploadFoto(fileInput);
+if (res.data) {
+  console.log(res.data.file_path);   // misal: "sebelum/179433-abc.webp"
+  console.log(res.data.public_url);  // URL publik foto siap tampil
+  console.log(res.data.thumbnail_url); // URL thumbnail teroptimasi
+}
+
+// 2. Upload foto bukti sesudah (Petugas)
+const resSesudah = await rampungApi.petugas.uploadFotoSesudah(laporanId, fileBukti);
+```
+
+#### Opsi 2: Mengirim Langsung Form Data (`multipart/form-data`)
+Kirim `POST` ke `/api/laporan/upload-foto` dengan body `FormData` (field `"file"`). Backend otomatis:
+1. Memvalidasi ukuran file ($\le 5\text{ MB}$).
+2. Memeriksa integritas file dengan **Magic Bytes** (JPEG, PNG, WebP asli).
+3. Menyimpan ke Supabase Storage dan mengembalikan `{ file_path, public_url, thumbnail_url }`.
+
+### Cara Membaca & Menampilkan Foto di UI:
+Semua endpoint publik (`/api/laporan/publik`, `/api/laporan/lacak/:kode`, `/api/laporan/publik/:id`) sudah **otomatis mengonversi** path internal menjadi URL absolut.
+Jika FE memegang raw `file_path`, cukup gunakan helper:
+```typescript
+import { dapatkanUrlFoto } from '@/lib/client/api-client';
+
+<img src={dapatkanUrlFoto(item.foto_sebelum_paths[0])} alt="Foto Aduan" />
+```
 
 ---
 
@@ -170,4 +215,29 @@ export function subscribeStatusLaporan(laporanId: string, onUpdate: (data: any) 
 - [ ] Di halaman *Peta Laporan*, bedakan warna/bentuk marker status (Baru, Diproses, Selesai).
 - [ ] Di modul *Perubahan Nyatanya*, tampilkan perbandingan foto sebelum dan sesudah secara *side-by-side* / *slider*.
 - [ ] Gunakan data mock di folder `mocks/` jika ingin styling komponen secara instan tanpa menunggu database.
+
+---
+
+## 9. Panduan Deploy & Keamanan Produksi (Staging & Production)
+
+### A. Pengaturan Secret Manager Hosting (Vercel / Cloud Provider)
+Pastikan environment variables berikut disetel pada dashboard hosting:
+1. `NEXT_PUBLIC_USE_MOCK=false` (Wajib: agar aplikasi membaca database nyata).
+2. `NEXT_PUBLIC_APP_URL=https://nama-domain-kamu.vercel.app` (Wajib berprotokol HTTPS).
+3. `NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co`
+4. `NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>`
+5. `SUPABASE_SERVICE_ROLE_KEY=<service-role-key>` $\rightarrow$ **SANGAT PENTING: Hanya set di Server Environment. JANGAN PERNAH menambahkan prefix `NEXT_PUBLIC_` atau memasukkannya ke bundle/repo!**
+
+### B. Pengaturan Supabase Dashboard
+1. **Redirect URLs**:
+   Di Supabase Dashboard $\rightarrow$ **Authentication** $\rightarrow$ **URL Configuration**:
+   - Set **Site URL** ke domain HTTPS hosting kamu (mis. `https://rampung.vercel.app`).
+   - Tambahkan **Redirect URLs**: `https://rampung.vercel.app/**`, `https://rampung.vercel.app/auth/callback`, dan `http://localhost:3000/**`.
+2. **Aturan Role Akun Publik**:
+   - Pendaftaran akun publik lewat form registrasi warga secara otomatis **hanya akan mendapatkan role `warga`** (diatur ketat oleh trigger database `handle_new_user()` dan RLS).
+   - Pengangkatan akun menjadi `petugas` atau `admin` hanya bisa dilakukan oleh Super Admin via endpoint `/api/admin/users/:id/role`.
+3. **Migrasi Database di Produksi**:
+   - Jalankan migrasi `001_extensions.sql` sampai `015_insert_rekap_ulas.sql` (termasuk `014_storage_buckets.sql`).
+   - **PERINGATAN:** File `016_seed_laporan_simulasi.sql` **JANGAN DIJALANKAN DI PRODUKSI** (file tersebut khusus staging/demo lokal agar juri dapat melihat visualisasi 200 data).
+
 

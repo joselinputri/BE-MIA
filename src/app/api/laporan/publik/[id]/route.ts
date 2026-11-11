@@ -7,6 +7,7 @@
 import { NextRequest } from 'next/server';
 import { apiSukses, apiError } from '@/lib/server/response';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { formatBanyakUrlFoto, formatUrlFoto } from '@/lib/server/upload';
 
 export async function GET(
   req: NextRequest,
@@ -34,6 +35,8 @@ export async function GET(
 
     return apiSukses({
       ...laporan,
+      foto_sebelum_paths: formatBanyakUrlFoto(laporan.foto_sebelum_paths || []),
+      foto_sesudah_paths: formatBanyakUrlFoto(laporan.foto_sesudah_paths || []),
       linimasa: history || [],
     });
   } catch (err: any) {

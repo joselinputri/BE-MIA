@@ -1,3 +1,11 @@
+-- =============================================================================
+-- 016_seed_laporan_simulasi.sql
+-- PERINGATAN: JANGAN JALANKAN FILE INI DI LINGKUNGAN PRODUKSI!
+-- =============================================================================
+-- File ini HANYA untuk staging, local development, dan live demo penjurian
+-- agar peta dan analitik dashboard terisi 200 data simulasi terkalibrasi.
+-- Seluruh baris ditandai: is_simulasi = true dan provenance = 'simulasi_terkalibrasi'.
+-- =============================================================================
 -- Generator Seed Simulasi Terkalibrasi (Deterministic Seed: 2026)
 -- Target: 200 baris laporan simulasi
 BEGIN;

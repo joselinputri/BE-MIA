@@ -61,6 +61,30 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
+    // 3b. Validasi Token Anti-Bot (Cloudflare Turnstile) untuk pelapor anonim
+    if (process.env.TURNSTILE_SECRET_KEY && !auth.isAuthenticated) {
+      if (!data.turnstile_token) {
+        return apiError('VALIDATION_ERROR', 'Verifikasi anti-bot Turnstile wajib disertakan untuk pelaporan.');
+      }
+      try {
+        const turnstileBody = new URLSearchParams();
+        turnstileBody.append('secret', process.env.TURNSTILE_SECRET_KEY);
+        turnstileBody.append('response', data.turnstile_token);
+        turnstileBody.append('remoteip', ip);
+
+        const turnstileRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          body: turnstileBody,
+        });
+        const turnstileJson = await turnstileRes.json();
+        if (!turnstileJson.success) {
+          return apiError('VALIDATION_ERROR', 'Verifikasi anti-bot gagal atau token kedaluwarsa.');
+        }
+      } catch (tErr) {
+        // Fallback gracefully jika koneksi Turnstile offline
+      }
+    }
+
     // 4. Lapisan Validasi Cerdas (Rule-Based + AI Generatif Fallback)
     const validasiKonten = await evaluasiLaporanCerdas(data.judul, data.deskripsi);
 

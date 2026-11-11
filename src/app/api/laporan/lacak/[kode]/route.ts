@@ -8,6 +8,7 @@ import { NextRequest } from 'next/server';
 import { apiSukses, apiError } from '@/lib/server/response';
 import { periksaRateLimit, hashIP } from '@/lib/server/rate-limit';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { formatBanyakUrlFoto } from '@/lib/server/upload';
 
 export async function GET(
   req: NextRequest,
@@ -56,7 +57,11 @@ export async function GET(
     const selisihHari = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 3600 * 24));
 
     return apiSukses({
-      laporan,
+      laporan: {
+        ...laporan,
+        foto_sebelum_paths: formatBanyakUrlFoto(laporan.foto_sebelum_paths || []),
+        foto_sesudah_paths: formatBanyakUrlFoto(laporan.foto_sesudah_paths || []),
+      },
       linimasa: history && history.length > 0 ? history : [
         { status_ke: 'masuk', judul_tahap: 'Diterima', catatan: 'Terdata di SI-ADUAN Siaga RAMPUNG Surakarta', created_at: laporan.created_at },
         { status_ke: 'ditinjau', judul_tahap: 'Dicek OPD', catatan: 'Disposisi OPD pengampu dan verifikasi lapangan', created_at: laporan.created_at },

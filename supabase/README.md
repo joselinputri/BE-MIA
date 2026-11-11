@@ -18,8 +18,9 @@ Seluruh berkas SQL di folder `supabase/migrations/` disusun secara terurut dan b
 10. `010_seed_referensi.sql` — Data awal resmi: 4 dinas (DPUPR, Dishub, DLH, Satpol PP), 6 kategori aduan, 5 kecamatan, dan 54 kelurahan lengkap.
 11. `011_indexes.sql` — Indeks spasial GIST, B-tree komposit (status, waktu), dan GIN full-text search.
 12. `013_update_data_penduduk.sql` — Sinkronisasi jumlah penduduk Dispendukcapil Surakarta (Semester 2 2023).
-13. `015_insert_rekap_ulas.sql` — Rekapitulasi agregat resmi aduan ULAS 2023 dari Portal Data Jateng.
-14. `016_seed_laporan_simulasi.sql` — 200 data laporan simulasi terkalibrasi (`is_simulasi = true`).
+13. `014_storage_buckets.sql` — Konfigurasi Supabase Storage bucket 'laporan-foto' dan kebijakan RLS storage.
+14. `015_insert_rekap_ulas.sql` — Rekapitulasi agregat resmi aduan ULAS 2023 dari Portal Data Jateng.
+15. `016_seed_laporan_simulasi.sql` — 200 data laporan simulasi terkalibrasi (`is_simulasi = true`). **PERINGATAN: HANYA untuk staging/demo lomba, JANGAN jalankan di produksi!**
 
 ---
 

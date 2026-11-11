@@ -8,6 +8,7 @@ import { NextRequest } from 'next/server';
 import { LaporanPublikFilterSchema } from '@/lib/contracts/laporan';
 import { apiSukses, apiError } from '@/lib/server/response';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { formatBanyakUrlFoto, dapatkanThumbnailUrl } from '@/lib/server/upload';
 
 export async function GET(req: NextRequest) {
   try {
@@ -92,8 +93,12 @@ export async function GET(req: NextRequest) {
 
     const nextCursor = hasNextPage && items.length > 0 ? items[items.length - 1].created_at : null;
 
-    // Field selection untuk respons ringkas mobile
+    // Field selection & resolusi URL foto publik
     const sanitizedItems = items.map((item: any) => {
+      const fotoSebelumUrls = formatBanyakUrlFoto(item.foto_sebelum_paths || []);
+      const fotoSesudahUrls = formatBanyakUrlFoto(item.foto_sesudah_paths || []);
+      const thumbUrl = fotoSebelumUrls.length > 0 ? dapatkanThumbnailUrl(item.foto_sebelum_paths[0]) : null;
+
       if (fields === 'ringkas') {
         return {
           id: item.id,
@@ -102,14 +107,19 @@ export async function GET(req: NextRequest) {
           kategori: item.kategori,
           kelurahan: item.kelurahan,
           status: item.status,
-          thumbnail: item.foto_sebelum_paths?.[0] || null,
+          thumbnail: thumbUrl,
           jumlah_dukungan: item.jumlah_dukungan,
           created_at: item.created_at,
           is_simulasi: item.is_simulasi,
           provenance: item.provenance,
         };
       }
-      return item;
+      return {
+        ...item,
+        foto_sebelum_paths: fotoSebelumUrls,
+        foto_sesudah_paths: fotoSesudahUrls,
+        thumbnail: thumbUrl,
+      };
     });
 
     return apiSukses(sanitizedItems, {

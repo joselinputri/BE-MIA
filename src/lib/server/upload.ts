@@ -53,3 +53,44 @@ export function generateNamaFileAcak(ekstensi: string = 'webp'): string {
   return `${timestamp}-${randomStr}.${ekstensi}`;
 }
 
+/**
+ * Mengubah path internal storage (contoh: "sebelum/123-abc.webp")
+ * menjadi URL publik absolut yang dapat langsung diakses oleh <img> pada Frontend.
+ */
+export function formatUrlFoto(path: string): string {
+  if (!path) return '';
+  // Jika sudah merupakan URL absolut (misal Unsplash dari seed simulasi)
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const cleanPath = path.replace(/^\/+/, '');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
+  return `${supabaseUrl}/storage/v1/object/public/laporan-foto/${cleanPath}`;
+}
+
+/**
+ * Format array paths foto menjadi array URL publik lengkap
+ */
+export function formatBanyakUrlFoto(paths: string[] = []): string[] {
+  if (!Array.isArray(paths)) return [];
+  return paths.map(formatUrlFoto);
+}
+
+/**
+ * Mendapatkan URL thumbnail beresolusi teroptimasi via Supabase Image Transformation
+ */
+export function dapatkanThumbnailUrl(path: string, lebar: number = 400, tinggi: number = 300): string {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    // Jika URL eksternal (Unsplash), tambahkan query resize standar jika mendukung
+    if (path.includes('unsplash.com')) {
+      return `${path}&w=${lebar}&h=${tinggi}&fit=crop`;
+    }
+    return path;
+  }
+  const cleanPath = path.replace(/^\/+/, '');
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
+  return `${supabaseUrl}/storage/v1/render/image/public/laporan-foto/${cleanPath}?width=${lebar}&height=${tinggi}&resize=contain`;
+}
+
+
