@@ -56,6 +56,30 @@ uji(
   s1.alasanPenanda || ''
 );
 
+const s_judol = periksaKontenLaporan('Situs judol gacor terpercaya', 'Daftar akun judol maxwin hari ini zeus olympus');
+uji(
+  'Content Sanitizer',
+  'Kata kunci judol & maxwin otomatis ditandai "perlu_verifikasi_tambahan"',
+  s_judol.perluVerifikasiTambahan && s_judol.penanda.includes('perlu_verifikasi_tambahan'),
+  s_judol.alasanPenanda || ''
+);
+
+const s_pinjaman = periksaKontenLaporan('Butuh pinjaman kilat bunga rendah', 'Tersedia pinjaman uang langsung cair tanpa agunan');
+uji(
+  'Content Sanitizer',
+  'Kata kunci pinjaman & tanpa agunan ditandai "perlu_verifikasi_tambahan"',
+  s_pinjaman.perluVerifikasiTambahan && s_pinjaman.penanda.includes('perlu_verifikasi_tambahan'),
+  s_pinjaman.alasanPenanda || ''
+);
+
+const s_joki = periksaKontenLaporan('OPEN JOKI TULIS & SKRIPSI', 'Hubungi kami jasa tugas sekolah dan kuliah murah');
+uji(
+  'Content Sanitizer',
+  'Kata kunci joki & jasa tugas ditandai "perlu_verifikasi_tambahan"',
+  s_joki.perluVerifikasiTambahan && s_joki.penanda.includes('perlu_verifikasi_tambahan'),
+  s_joki.alasanPenanda || ''
+);
+
 const s2 = periksaKontenLaporan('Jalan berlubang depan pasar', 'Mohon segera diperbaiki karena sering ada motor terjatuh saat hujan');
 uji(
   'Content Sanitizer',

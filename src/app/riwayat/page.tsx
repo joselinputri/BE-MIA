@@ -36,7 +36,7 @@ export function cekIndikasiSpam(laporan?: Laporan | null): boolean {
   if (!laporan) return false;
   if (laporan.penanda?.includes('perlu_verifikasi_tambahan')) return true;
   const gabung = `${laporan.judul || ''} ${laporan.deskripsi || ''}`.toLowerCase();
-  return /joki|slot|gacor|pinjol|dana cair|jasa tugas|open joki|followers|top up|topup|dm ig|wa\.me/i.test(gabung);
+  return /joki|open joki|jasa tugas|jasa skripsi|slot|gacor|maxwin|zeus|olympus|pragmatic|judi|judol|togel|casino|poker|taruhan|sbobet|pinjol|pinjaman|pinjam uang|dana cair|dana cepat|dana kilat|butuh dana|butuh uang|tanpa jaminan|tanpa agunan|bunga rendah|gestun|followers|top up|topup|dm ig|wa\.me|open bo|vcs|obat kuat/i.test(gabung);
 }
 
 function RiwayatContent() {

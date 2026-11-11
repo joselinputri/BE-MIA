@@ -13,31 +13,91 @@
 
 export type PenandaLaporan = 'perlu_verifikasi_tambahan';
 
-// Daftar kata kunci terlarang (spam, promosi komersial, judi, pinjol, joki)
-const KATA_KUNCI_SPAM: string[] = [
-  'slot',
-  'gacor',
+// Daftar kata kunci terlarang (spam, promosi komersial, judi/judol, pinjaman/pinjol, joki, dll)
+export const KATA_KUNCI_SPAM: string[] = [
+  // 1. Judi Online / Judol & Kasino
+  'judol',
   'judi',
+  'judi online',
+  'slot',
+  'slot gacor',
+  'slot online',
+  'gacor',
+  'maxwin',
+  'zeus',
+  'olympus',
+  'pragmatic',
   'togel',
   'casino',
   'poker',
+  'sbobet',
+  'taruhan',
+  'bandar judi',
+  'bandar slot',
+  'depo pulsa',
+  'jackpot',
+  'scatter',
+  'roulette',
+
+  // 2. Pinjaman & Pinjol Ilegal / Finansial Bodong
   'pinjol',
+  'pinjaman',
+  'pinjam uang',
+  'pinjaman online',
+  'pinjaman cepat',
+  'pinjaman kilat',
+  'pinjaman dana',
+  'butuh dana',
+  'butuh pinjaman',
+  'butuh uang',
   'dana cair',
+  'dana cepat',
+  'dana tunai',
+  'dana kilat',
+  'dana ghaib',
   'tanpa jaminan',
+  'tanpa agunan',
   'bunga rendah',
-  'promo diskon',
+  'gestun',
+  'gesek tunai',
+  'rentenir',
+  'pesugihan',
+
+  // 3. Joki & Jasa Akademik / Jual Beli Akun
   'joki',
   'open joki',
   'jasa joki',
   'jasa tugas',
+  'jasa skripsi',
   'jual beli',
+  'jual akun',
+  'beli akun',
+  'jual chip',
+  'beli chip',
   'followers',
+  'tambah followers',
   'top up',
   'topup',
   'dm ig',
+
+  // 4. Iklan Komersial / Konten Vulgar / Investasi Ilegal
+  'promo diskon',
+  'open bo',
+  'vcs',
+  'obat kuat',
+  'pembesar',
+  'pelangsing',
+  'pemutih',
+  'crypto',
+  'trading binary',
+  'investasi bodong',
+  'giveaway uang',
+
+  // 5. Shortlink & Kontak Spam
   'wa.me/',
   'bit.ly/',
   't.me/',
+  'tinyurl.com/',
 ];
 
 export interface HasilValidasiKonten {
@@ -128,11 +188,11 @@ export async function evaluasiLaporanCerdas(
 
     const promptText = `Anda adalah asisten AI resmi verifikasi kelayakan laporan aduan warga Kota Surakarta (Platform RAMPUNG).
 Tugas Anda:
-1. Evaluasi apakah laporan ini relevan dengan masalah fasilitas/infrastruktur/layanan publik kota, atau merupakan spam/iklan/jasa joki/promosi komersial/hoax.
+1. Evaluasi apakah laporan ini relevan dengan masalah fasilitas/infrastruktur/layanan publik kota Surakarta, atau merupakan spam/iklan/jasa joki/promosi komersial/judi online (judol)/pinjaman online (pinjol)/penipuan/tidak relevan dengan aduan fasilitas warga.
 2. Tentukan tingkat urgensi (rendah/sedang/tinggi).
-3. Berikan skor kelayakan fasilitas publik (0 sampai 100). Jika spam/joki/iklan, skor HARUS di bawah 30.
+3. Berikan skor kelayakan fasilitas publik (0 sampai 100). Jika spam/joki/iklan/judol/pinjaman/tidak relevan, skor HARUS di bawah 30.
 4. Berikan saran singkat jika pelapor perlu melengkapi detail lokasi/kondisi.
-5. Jika ada indikasi anomali/spam/joki, set "indikasi_anomali": true dan sebutkan alasannya.
+5. Jika ada indikasi anomali/spam/joki/judol/pinjol/tidak relevan, set "indikasi_anomali": true dan sebutkan alasannya dengan jelas.
 
 Data Laporan:
 - Kategori: ${kategoriNama}
