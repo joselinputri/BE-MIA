@@ -7,12 +7,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 
-export function getSupabaseServerClient() {
+export async function getSupabaseServerClient(explicitAuthHeader?: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-anon-key';
 
-  const reqHeaders = headers();
-  const authHeader = reqHeaders.get('authorization') || '';
+  let authHeader = explicitAuthHeader || '';
+
+  if (!authHeader) {
+    try {
+      const headerStore = await headers();
+      authHeader = headerStore?.get ? headerStore.get('authorization') || '' : '';
+    } catch {
+      // Abaikan jika headers() tidak tersedia di runtime konteks
+    }
+  }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {

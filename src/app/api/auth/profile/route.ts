@@ -20,7 +20,7 @@ async function getProfile() {
     return { error: apiError('SERVICE_UNAVAILABLE', 'Layanan akun belum dikonfigurasi.') };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await getSupabaseServerClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return { error: apiError('UNAUTHORIZED', 'Silakan masuk untuk melihat profil.') };

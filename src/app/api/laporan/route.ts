@@ -28,7 +28,7 @@ function buatKodeLacakKriptografis(): string {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
-    const auth = await dapatkanKonteksAuth();
+    const auth = await dapatkanKonteksAuth(req.headers.get('authorization') || undefined);
 
     // 1. Rate Limiting: 5 laporan/jam untuk IP anonim, 10/jam untuk user login
     const maxLimit = auth.isAuthenticated ? 10 : 5;
@@ -169,7 +169,8 @@ export async function POST(req: NextRequest) {
       201
     );
   } catch (error: any) {
-    return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat memproses laporan');
+    console.error('ERROR LAPORAN POST:', error);
+    return apiError('INTERNAL_ERROR', error?.message || 'Terjadi kesalahan sistem saat memproses laporan');
   }
 }
 

@@ -15,14 +15,38 @@ export interface AuthContext {
   isAuthenticated: boolean;
 }
 
-export async function dapatkanKonteksAuth(): Promise<AuthContext> {
-  const supabase = getSupabaseServerClient();
+export async function dapatkanKonteksAuth(authHeader?: string): Promise<AuthContext> {
+  try {
+    const supabase = await getSupabaseServerClient(authHeader);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  if (!user) {
+    if (userError || !user) {
+      return {
+        userId: null,
+        role: 'warga',
+        dinasId: null,
+        isAuthenticated: false,
+      };
+    }
+
+    // Ambil role definitif dari database profiles
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('role, dinas_id')
+      .eq('id', user.id)
+      .single();
+
+    return {
+      userId: user.id,
+      role: (profile?.role as UserRole) || 'warga',
+      dinasId: profile?.dinas_id || null,
+      isAuthenticated: true,
+    };
+  } catch (err) {
     return {
       userId: null,
       role: 'warga',
@@ -30,19 +54,5 @@ export async function dapatkanKonteksAuth(): Promise<AuthContext> {
       isAuthenticated: false,
     };
   }
-
-  // Ambil role definitif dari database profiles
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('role, dinas_id')
-    .eq('id', user.id)
-    .single();
-
-  return {
-    userId: user.id,
-    role: (profile?.role as UserRole) || 'warga',
-    dinasId: profile?.dinas_id || null,
-    isAuthenticated: true,
-  };
 }
 
