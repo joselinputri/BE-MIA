@@ -5,7 +5,7 @@
  */
 import dashboardMock from '../../../mocks/dashboard.json';
 import laporanMock from '../../../mocks/laporan-publik.json';
-import { fetchAuthed } from './supabase';
+import { fetchAuthed, supabaseBrowser } from './supabase';
 
 export const USE_MOCK =
   process.env.NEXT_PUBLIC_USE_MOCK === 'true' ||
@@ -50,8 +50,8 @@ export interface Laporan {
   status: string;
   penanda?: string[];
   saran_perbaikan?: string[];
-  foto_sebelum_paths: string[];
-  foto_sesudah_paths: string[];
+  foto_sebelum_paths?: string[];
+  foto_sesudah_paths?: string[];
   is_anonim?: boolean;
   is_demo?: boolean;
   provenance?: string;
@@ -176,7 +176,7 @@ export async function getLaporanPublik(): Promise<Laporan[]> {
     return Array.from(mergedMap.values());
   }
 
-  const res = await fetchAuthed('/api/laporan/publik');
+  const res = await fetchAuthed('/api/laporan/publik?sumber=asli');
   const json = await res.json();
   if (!res.ok || !Array.isArray(json.data)) {
     throw new Error(json.error?.pesan || 'Daftar laporan publik gagal dimuat.');
@@ -249,6 +249,7 @@ export interface BuatLaporanPayload {
   kelurahan?: string;
   kecamatan?: string;
   foto_url?: string;
+  foto_file?: File;
   is_anonim: boolean;
   email_pelapor?: string;
   telepon_pelapor?: string;
@@ -270,10 +271,6 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
   penanda?: string[];
   saran_perbaikan?: string[];
 }> {
-  const defaultPhoto =
-    payload.foto_url ||
-    'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=800&auto=format&fit=crop';
-
   try {
     if (USE_MOCK) {
       const infoKat = KATEGORI_NAMA_MAP[payload.kategori_slug] || KATEGORI_NAMA_MAP['penambalan-aspal'];
@@ -326,10 +323,19 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
       };
     }
 
-    const fotoFinal =
-      payload.foto_url && !payload.foto_url.startsWith('blob:')
-        ? payload.foto_url
-        : defaultPhoto;
+    if (!payload.foto_file) {
+      return {
+        ok: false,
+        pesan: 'Pilih foto bukti kondisi sebelum perbaikan terlebih dahulu.',
+      };
+    }
+
+    if (!supabaseBrowser) {
+      return {
+        ok: false,
+        pesan: 'Supabase belum dikonfigurasi untuk mengunggah foto.',
+      };
+    }
 
     let kategoriId = payload.kategori_id;
 
@@ -359,13 +365,41 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
       };
     }
 
+    const uploadUrlRes = await fetchAuthed('/api/laporan/upload-foto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipe: payload.foto_file.type }),
+    });
+    const uploadUrlJson = await uploadUrlRes.json();
+    const uploadInfo = uploadUrlJson.data;
+
+    if (!uploadUrlRes.ok || uploadUrlJson.error || !uploadInfo?.file_path || !uploadInfo?.token) {
+      return {
+        ok: false,
+        pesan: uploadUrlJson.error?.pesan || 'Gagal menyiapkan unggahan foto.',
+      };
+    }
+
+    const { data: uploadedPhoto, error: uploadError } = await supabaseBrowser.storage
+      .from('laporan-foto')
+      .uploadToSignedUrl(uploadInfo.file_path, uploadInfo.token, payload.foto_file, {
+        contentType: payload.foto_file.type,
+      });
+
+    if (uploadError || !uploadedPhoto?.path) {
+      return {
+        ok: false,
+        pesan: uploadError?.message || 'Gagal mengunggah foto bukti.',
+      };
+    }
+
     const requestBody = {
       judul: payload.judul.trim(),
       deskripsi: payload.deskripsi.trim(),
       kategori_id: kategoriId,
       latitude: payload.latitude || -7.5684,
       longitude: payload.longitude || 110.825,
-      foto_sebelum_paths: [fotoFinal],
+      foto_sebelum_paths: [uploadedPhoto.path],
       is_anonim: payload.is_anonim,
       email_pelapor: payload.email_pelapor,
       telepon_pelapor: payload.telepon_pelapor,

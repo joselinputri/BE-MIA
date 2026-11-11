@@ -59,3 +59,4 @@ BEGIN
   GROUP BY k.id, k.nama, k.slug, d.id, d.nama, d.singkatan;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+

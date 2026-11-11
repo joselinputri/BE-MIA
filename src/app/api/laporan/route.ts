@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return apiError(
         'VALIDATION_ERROR',
-        parsed.error.errors[0]?.message || 'Input data laporan tidak valid',
+        parsed.error.issues?.[0]?.message || 'Input data laporan tidak valid',
         parsed.error.format()
       );
     }

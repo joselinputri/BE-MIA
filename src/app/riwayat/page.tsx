@@ -462,7 +462,7 @@ function RiwayatContent() {
                   <div className="bg-card rounded-2xl overflow-hidden border border-navy/10 space-y-3 p-3">
                     <div className="relative h-48 w-full rounded-xl overflow-hidden bg-slate-900">
                       {currentLap?.foto_sebelum_paths?.[0]?.startsWith('http') ? (
-                        <img src={currentLap.foto_sebelum_paths?.[0] || ''} alt="Kondisi sebelum penanganan" className="h-full w-full object-cover" />
+                        <img src={currentLap?.foto_sebelum_paths?.[0]} alt="Kondisi sebelum penanganan" className="h-full w-full object-cover" />
                       ) : (
                         <span className="grid h-full place-items-center px-4 text-center text-xs text-white/70">
                           Foto sebelum belum tersedia.
@@ -480,7 +480,7 @@ function RiwayatContent() {
                   <div className="bg-card rounded-2xl overflow-hidden border border-navy/10 space-y-3 p-3">
                     <div className="relative h-48 w-full rounded-xl overflow-hidden bg-slate-900">
                       {currentLap?.foto_sesudah_paths?.[0]?.startsWith('http') ? (
-                        <img src={currentLap.foto_sesudah_paths?.[0] || ''} alt="Kondisi sesudah penanganan" className="h-full w-full object-cover" />
+                        <img src={currentLap?.foto_sesudah_paths?.[0]} alt="Kondisi sesudah penanganan" className="h-full w-full object-cover" />
                       ) : (
                         <span className="grid h-full place-items-center px-4 text-center text-xs text-white/70">
                           Foto sesudah belum tersedia.

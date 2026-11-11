@@ -15,6 +15,7 @@ const STATUS_CODE_MAP: Record<ErrorCode, number> = {
   RATE_LIMITED: 429,
   INVALID_STATUS_TRANSITION: 400,
   CONFLICT: 409,
+  SERVICE_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 };
 
@@ -41,4 +42,3 @@ export function apiError(
   };
   return NextResponse.json(body, { status });
 }
-

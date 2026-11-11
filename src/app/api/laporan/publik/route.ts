@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     if (!parsed.success) {
       return apiError(
         'VALIDATION_ERROR',
-        parsed.error.errors[0]?.message || 'Parameter query filter tidak valid'
+        parsed.error.issues?.[0]?.message || 'Parameter query filter tidak valid'
       );
     }
 

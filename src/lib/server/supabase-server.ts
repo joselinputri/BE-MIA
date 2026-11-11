@@ -33,3 +33,29 @@ export async function getSupabaseServerClient(explicitAuthHeader?: string) {
   });
 }
 
+export function isSupabasePublicConfigured(): boolean {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  return Boolean(
+    supabaseUrl &&
+      supabaseAnonKey &&
+      !supabaseUrl.includes('mock') &&
+      !supabaseAnonKey.includes('mock') &&
+      !supabaseUrl.includes('your-project') &&
+      !supabaseAnonKey.includes('your-anon-key')
+  );
+}
+
+export function getSupabasePublicClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-anon-key';
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+

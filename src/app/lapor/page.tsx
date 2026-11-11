@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -64,15 +64,40 @@ export default function LaporPage() {
   } | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!foto?.startsWith('blob:')) return;
+    return () => URL.revokeObjectURL(foto);
+  }, [foto]);
+
+  useEffect(() => {
+    if (!errorNotice) return;
+    const frame = window.requestAnimationFrame(() => {
+      errorRef.current?.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [errorNotice]);
 
   /* ── handlers ── */
   function handleFoto(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setFotoFile(file);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorNotice('Format foto harus JPG, PNG, atau WebP.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorNotice('Ukuran foto maksimal 5 MB.');
+      e.target.value = '';
+      return;
+    }
+    setErrorNotice(null);
     setFotoName(file.name);
     const url = URL.createObjectURL(file);
     setFoto(url);
+    setFotoFile(file);
   }
 
   function handleLokasiSaya() {
@@ -116,30 +141,12 @@ export default function LaporPage() {
       setErrorNotice(`Deskripsi laporan minimal ${DESC_MIN} karakter agar jelas kronologi lapangannya.`);
       return;
     }
+    if (!fotoFile) {
+      setErrorNotice('Unggah foto bukti kondisi sebelum perbaikan terlebih dahulu.');
+      return;
+    }
 
     setIsSubmitting(true);
-
-    let fotoUrlToSubmit = foto || undefined;
-
-    // Jika pengguna memilih file foto dari galeri/kamera, upload ke endpoint backend Supabase Storage
-    if (fotoFile) {
-      try {
-        const formData = new FormData();
-        formData.append('file', fotoFile);
-        const uploadRes = await fetch('/api/laporan/upload-foto', {
-          method: 'POST',
-          body: formData,
-        });
-        if (uploadRes.ok) {
-          const uploadJson = await uploadRes.json();
-          if (uploadJson.data?.public_url || uploadJson.data?.file_path) {
-            fotoUrlToSubmit = uploadJson.data.public_url || uploadJson.data.file_path;
-          }
-        }
-      } catch (err) {
-        console.warn('Upload foto lokal gagal, fallback ke default:', err);
-      }
-    }
 
     const res = await kirimLaporan({
       judul: judul.trim(),
@@ -147,7 +154,8 @@ export default function LaporPage() {
       kategori_slug: kategori,
       latitude,
       longitude,
-      foto_url: fotoUrlToSubmit,
+      foto_url: foto || undefined,
+      foto_file: fotoFile,
       is_anonim: true,
     });
 
@@ -182,13 +190,6 @@ export default function LaporPage() {
         <div className="grid gap-8 md:grid-cols-[1fr_340px]">
           {/* ════════ LEFT COLUMN — Form Steps ════════ */}
           <div className="space-y-10">
-            {errorNotice && (
-              <div className="p-4 bg-rose-100 border border-rose-300 text-crimson text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in">
-                <TriangleAlert className="w-5 h-5 shrink-0" />
-                <span>{errorNotice}</span>
-              </div>
-            )}
-
             {/* ── Step 1: Pilih Jenis Masalah ── */}
             <Reveal delay={80}>
               <div className="bg-panel p-6 rounded-3xl shadow-[0_8px_24px_rgba(40,38,75,.14)] border border-navy/10">
@@ -241,12 +242,12 @@ export default function LaporPage() {
                     <>
                       <Camera className="h-9 w-9 text-slate/70" />
                       <span className="font-bold text-navy">Ambil Foto / Unggah File</span>
-                      <span className="text-xs text-slate/70">Format JPG, PNG hingga 10MB</span>
+                      <span className="text-xs text-slate/70">JPG, PNG, atau WebP hingga 5MB</span>
                     </>
                   )}
                   {fotoName && <span className="mt-2 text-xs font-mono font-bold text-navy/70">{fotoName}</span>}
                 </button>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFoto} aria-hidden />
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFoto} aria-hidden />
 
                 {/* Lokasi laporan */}
                 <div className="flex items-start justify-between gap-3 rounded-2xl bg-white p-4 border border-navy/10 shadow-sm">
@@ -318,41 +319,41 @@ export default function LaporPage() {
               </div>
             </Reveal>
 
+            {errorNotice && (
+              <div
+                ref={errorRef}
+                role="alert"
+                aria-live="assertive"
+                className="flex scroll-mt-24 items-center gap-2 rounded-2xl border border-rose-300 bg-rose-100 p-4 text-xs font-bold text-crimson animate-in fade-in"
+              >
+                <TriangleAlert className="h-5 w-5 shrink-0" />
+                <span>{errorNotice}</span>
+              </div>
+            )}
             {/* ── Bottom actions ── */}
             <Reveal delay={300}>
-              <div className="space-y-4 pt-2">
-                {errorNotice && (
-                  <div
-                    role="alert"
-                    className="flex items-start gap-3 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-crimson shadow-sm animate-in fade-in"
-                  >
-                    <TriangleAlert className="h-4 w-4 shrink-0 text-crimson mt-0.5" />
-                    <span>{errorNotice}</span>
-                  </div>
-                )}
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className={cn(
-                      tombolDasar,
-                      'bg-crimson px-7 text-white shadow-lg shadow-crimson/20 hover:bg-[#8a002b] disabled:opacity-50'
-                    )}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RotateCw className="h-4 w-4 animate-spin" />
-                        <span>Memproses Laporan...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4" fill="white" />
-                        <span>Kirim Laporan Sekarang</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className={cn(
+                    tombolDasar,
+                    'bg-crimson px-7 text-white shadow-lg shadow-crimson/20 hover:bg-[#8a002b] disabled:opacity-50'
+                  )}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RotateCw className="h-4 w-4 animate-spin" />
+                      <span>Memproses Laporan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" fill="white" />
+                      <span>Kirim Laporan Sekarang</span>
+                    </>
+                  )}
+                </button>
               </div>
             </Reveal>
           </div>

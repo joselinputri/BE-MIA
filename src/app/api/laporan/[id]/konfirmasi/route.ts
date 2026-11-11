@@ -19,7 +19,7 @@ export async function POST(
 
     const parsed = KonfirmasiInputSchema.safeParse(json);
     if (!parsed.success) {
-      return apiError('VALIDATION_ERROR', parsed.error.errors[0]?.message || 'Input tidak valid');
+      return apiError('VALIDATION_ERROR', parsed.error.issues?.[0]?.message || 'Input tidak valid');
     }
 
     const { jawaban, rating, komentar, minta_buka_ulang } = parsed.data;

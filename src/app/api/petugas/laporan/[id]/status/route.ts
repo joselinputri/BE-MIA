@@ -26,7 +26,7 @@ export async function PATCH(
     const json = await req.json();
     const parsed = UbahStatusInputSchema.safeParse(json);
     if (!parsed.success) {
-      return apiError('VALIDATION_ERROR', parsed.error.errors[0]?.message || 'Input tidak valid');
+      return apiError('VALIDATION_ERROR', parsed.error.issues?.[0]?.message || 'Input tidak valid');
     }
 
     const { status_ke, catatan, foto_sesudah_paths } = parsed.data;

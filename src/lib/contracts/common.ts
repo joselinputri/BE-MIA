@@ -14,6 +14,7 @@ export type ErrorCode =
   | 'RATE_LIMITED'
   | 'INVALID_STATUS_TRANSITION'
   | 'CONFLICT'
+  | 'SERVICE_UNAVAILABLE'
   | 'INTERNAL_ERROR';
 
 export const ProvenanceEnum = z.enum([
@@ -49,10 +50,11 @@ export const ApiErrorSchema = z.object({
     'RATE_LIMITED',
     'INVALID_STATUS_TRANSITION',
     'CONFLICT',
+    'SERVICE_UNAVAILABLE',
     'INTERNAL_ERROR',
   ]),
   pesan: z.string(),
-  detail: z.record(z.any()).optional(),
+  detail: z.record(z.string(), z.any()).optional(),
 });
 export type ApiErrorType = z.infer<typeof ApiErrorSchema>;
 
@@ -68,4 +70,3 @@ export const PaginationQuerySchema = z.object({
   fields: z.string().optional(), // 'ringkas' | 'lengkap' | 'id,judul,status'
 });
 export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
-

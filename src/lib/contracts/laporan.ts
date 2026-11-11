@@ -15,6 +15,9 @@ const SURAKARTA_BOUNDS = {
   maxLat: -7.52,
 };
 
+// PostgreSQL menerima format UUID 32-hex terlepas dari bit versi/varian RFC (seed reference IDs menggunakan format ini)
+export const POSTGRES_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const StatusLaporanEnum = z.enum([
   'masuk',
   'ditinjau',
@@ -40,8 +43,8 @@ export const BuatLaporanInputSchema = z.object({
     .min(20, 'Deskripsi laporan minimal 20 karakter agar jelas bagi petugas')
     .max(2000, 'Deskripsi laporan maksimal 2000 karakter')
     .trim(),
-  kategori_id: z.string().uuid('ID Kategori tidak valid'),
-  kelurahan_id: z.string().uuid('ID Kelurahan tidak valid').optional(),
+  kategori_id: z.string().regex(POSTGRES_UUID_PATTERN, 'ID Kategori tidak valid'),
+  kelurahan_id: z.string().regex(POSTGRES_UUID_PATTERN, 'ID Kelurahan tidak valid').optional(),
   latitude: z
     .number()
     .min(SURAKARTA_BOUNDS.minLat, 'Lokasi berada di luar batas selatan Kota Surakarta (-7.60)')
@@ -65,7 +68,7 @@ export type BuatLaporanInput = z.infer<typeof BuatLaporanInputSchema>;
 
 // Schema respons laporan publik (bebas PII)
 export const LaporanPublikItemSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().regex(POSTGRES_UUID_PATTERN, 'ID laporan tidak valid'),
   kode_lacak: z.string(),
   judul: z.string(),
   deskripsi: z.string(),
@@ -97,7 +100,7 @@ export type LaporanPublikItem = z.infer<typeof LaporanPublikItemSchema>;
 
 // Schema query pencarian laporan serupa
 export const LaporanSerupaQuerySchema = z.object({
-  kategori_id: z.string().uuid('Kategori ID harus valid'),
+  kategori_id: z.string().regex(POSTGRES_UUID_PATTERN, 'Kategori ID harus valid'),
   latitude: z.coerce.number(),
   longitude: z.coerce.number(),
   radius_meter: z.coerce.number().min(50).max(2000).default(500),
