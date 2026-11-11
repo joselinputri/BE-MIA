@@ -1,4 +1,4 @@
-# Panduan Integrasi Frontend (FE Handoff) — RAMPUNG
+# Panduan Integrasi dan Handoff — RAMPUNG
 
 Halo Syifa (Frontend Engineer)! Dokumen ini adalah panduan lengkap kontrak API, skema data, dan integrasi backend untuk membangun antarmuka web platform **RAMPUNG** tanpa perlu menebak-nebak.
 
@@ -10,13 +10,14 @@ Buat berkas `.env.local` di root proyek. **Hanya gunakan variabel berawalan `NEX
 
 ```env
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Mode Mock: set true untuk dev offline, set false di staging/produksi
 NEXT_PUBLIC_USE_MOCK=false
 
 # Supabase Client SDK (Aman di Client-Side)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Supabase server API (jangan pernah diekspos ke browser)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 # Cloudflare Turnstile (Opsional, untuk form anonim)
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
@@ -25,47 +26,7 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-site-key
 > [!CAUTION]
 > **JANGAN PERNAH** memanggil atau mengimpor `SUPABASE_SERVICE_ROLE_KEY` di file antarmuka (komponen `'use client'`). Kunci tersebut khusus sisi server.
 
----
-
-## 1.1. Alur Upload & Pembacaan Foto (Supabase Storage)
-
-Backend telah menyiapkan bucket Supabase Storage bernama **`laporan-foto`** dengan dua folder terisolasi:
-- `sebelum/` : Foto kondisi awal saat warga membuat aduan (diakses publik/warga).
-- `sesudah/` : Foto bukti perbaikan fisik yang hanya dapat diunggah oleh **Petugas/Admin**.
-
-### Cara Upload dari Frontend:
-FE dapat memilih salah satu dari 2 cara yang didukung penuh:
-
-#### Opsi 1: Menggunakan SDK `rampungApi` (Paling Praktis)
-```typescript
-import { rampungApi, dapatkanUrlFoto } from '@/lib/client/api-client';
-
-// 1. Upload foto sebelum (Warga)
-const res = await rampungApi.laporan.uploadFoto(fileInput);
-if (res.data) {
-  console.log(res.data.file_path);   // misal: "sebelum/179433-abc.webp"
-  console.log(res.data.public_url);  // URL publik foto siap tampil
-  console.log(res.data.thumbnail_url); // URL thumbnail teroptimasi
-}
-
-// 2. Upload foto bukti sesudah (Petugas)
-const resSesudah = await rampungApi.petugas.uploadFotoSesudah(laporanId, fileBukti);
-```
-
-#### Opsi 2: Mengirim Langsung Form Data (`multipart/form-data`)
-Kirim `POST` ke `/api/laporan/upload-foto` dengan body `FormData` (field `"file"`). Backend otomatis:
-1. Memvalidasi ukuran file ($\le 5\text{ MB}$).
-2. Memeriksa integritas file dengan **Magic Bytes** (JPEG, PNG, WebP asli).
-3. Menyimpan ke Supabase Storage dan mengembalikan `{ file_path, public_url, thumbnail_url }`.
-
-### Cara Membaca & Menampilkan Foto di UI:
-Semua endpoint publik (`/api/laporan/publik`, `/api/laporan/lacak/:kode`, `/api/laporan/publik/:id`) sudah **otomatis mengonversi** path internal menjadi URL absolut.
-Jika FE memegang raw `file_path`, cukup gunakan helper:
-```typescript
-import { dapatkanUrlFoto } from '@/lib/client/api-client';
-
-<img src={dapatkanUrlFoto(item.foto_sebelum_paths[0])} alt="Foto Aduan" />
-```
+Untuk kerja antarmuka tanpa project Supabase, gunakan `NEXT_PUBLIC_USE_MOCK=true`. Aplikasi memakai data JSON lokal dan menyimpan laporan baru di browser; tidak ada banner mode khusus. Untuk memakai database, lengkapi semua kunci Supabase, ubah flag menjadi `false`, lalu restart server. Jangan kirim service role key lewat chat atau commit ke Git.
 
 ---
 
@@ -117,20 +78,20 @@ Gunakan mapping berikut untuk menampilkan toast/alert di sisi pengguna:
 | `RATE_LIMITED` | 429 | *"Terlalu banyak permintaan. Mohon tunggu beberapa saat sebelum mencoba kembali."* |
 | `INVALID_STATUS_TRANSITION` | 400 | Tampilkan pesan dari `error.pesan` (mis. penolakan wajib sertakan alasan). |
 | `CONFLICT` | 409 | *"Anda sudah pernah memberikan dukungan pada laporan ini."* |
+| `SERVICE_UNAVAILABLE` | 503 | *"Layanan database belum dikonfigurasi. Coba lagi setelah koneksi Supabase tersedia."* |
 | `INTERNAL_ERROR` | 500 | *"Terjadi gangguan koneksi pada server. Silakan coba sesaat lagi."* |
 
 ---
 
-## 4. Cara Menampilkan Label Provenance Data
+## 4. Provenance Data
 
-Setiap data analitik dan item laporan menyertakan kolom `provenance` (`'asli'` \| `'agregat_resmi'` \| `'simulasi_terkalibrasi'` \| `'simulasi'`).
-Gunakan badge visual sesuai panduan berikut:
+Kolom `provenance` (`'asli'` \| `'agregat_resmi'` \| `'simulasi_terkalibrasi'` \| `'simulasi'`) adalah metadata internal. Jangan menyatakan data berasal dari database atau sumber resmi jika belum terhubung. Jangan beri label "Resmi" pada laporan warga; status laporan tidak berarti data telah diverifikasi oleh pemerintah.
 
-| Nilai Provenance | Label Teks Badge UI | Warna Badge Rekomendasi | Tooltip Penjelasan |
-| :--- | :--- | :--- | :--- |
-| `asli` | **Resmi** | Hijau / Emerald (`bg-emerald-50 text-emerald-700`) | Data definitif resmi Pemerintah Kota Surakarta |
-| `agregat_resmi` | **Agregat Resmi** | Biru (`bg-blue-50 text-blue-700`) | Statistik resmi Dispendukcapil / Satu Data Jateng |
-| `simulasi_terkalibrasi` | **Data Simulasi** | Abu-abu / Netral (`bg-slate-100 text-slate-700`) | Titik mikro terkalibrasi dari pola aduan resmi ULAS |
+| Nilai Provenance | Makna Internal |
+| :--- | :--- |
+| `asli` | Laporan yang tersimpan di database; bukan pengesahan pemerintah |
+| `agregat_resmi` | Agregat dari sumber resmi yang dicantumkan |
+| `simulasi_terkalibrasi`, `simulasi` | Data pengembangan/pengujian; jangan kirim sebagai data live |
 
 ---
 
@@ -177,8 +138,9 @@ export function subscribeStatusLaporan(laporanId: string, onUpdate: (data: any) 
 | Method | Path | Auth | Keterangan |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/laporan` | Publik | Buat laporan aduan baru |
+| `POST` | `/api/laporan/upload-foto` | Publik, rate-limited | Membuat signed upload URL; respons memuat `upload_url`, `file_path`, dan `token` |
 | `GET` | `/api/laporan/publik` | Publik | Daftar laporan publik (cursor pagination: `?limit=20&cursor=...`) |
-| `GET` | `/api/laporan/lacak/:kode` | Publik | Lacak status tiket via kode lacak (mis. `RPG-SIM00001`) |
+| `GET` | `/api/laporan/lacak/:kode` | Publik | Lacak status tiket via kode lacak (kode `RMP-2025-088` tersedia pada data offline) |
 | `GET` | `/api/laporan/serupa` | Publik | Cek laporan terdekat: `?kategori_id=...&latitude=...&longitude=...` |
 | `POST` | `/api/laporan/:id/dukungan` | Publik | Upvote laporan serupa |
 | `POST` | `/api/laporan/:id/konfirmasi` | Publik / Warga | Audit gotong-royong pelapor (puas, biasa, kurang_puas) |
@@ -196,48 +158,45 @@ export function subscribeStatusLaporan(laporanId: string, onUpdate: (data: any) 
 
 ---
 
-## 7. Akun Demo untuk Pengujian Antarmuka
+## 7. Status Integrasi yang Perlu Diketahui
 
-| Peran (Role) | Email Demo | Password Demo | Hak Akses |
-| :--- | :--- | :--- | :--- |
-| **Warga** | `warga.demo@rampung.id` | `WargaSolo2026!` | Melapor bernama, melihat riwayat laporannya, konfirmasi hasil |
-| **Petugas DPUPR** | `petugas.dpupr@surakarta.go.id` | `PetugasDPUPR2026!` | Menangani aduan aspal, trotoar, dan drainase |
-| **Petugas Dishub** | `petugas.dishub@surakarta.go.id` | `PetugasDishub2026!` | Menangani aduan lampu PJU, rambu, dan halte |
-| **Petugas DLH** | `petugas.dlh@surakarta.go.id` | `PetugasDLH2026!` | Menangani sampah liar dan kebersihan lingkungan |
-| **Admin** | `admin@rampung.surakarta.go.id` | `AdminSoloRampung2026!` | Pengawasan menyeluruh, audit log, kelola user |
+- Halaman masuk/daftar memakai Supabase Auth dan mengirim access token ke API. Pendaftaran publik selalu membuat role `warga`; role admin/petugas harus diberikan oleh administrator.
+- Form laporan menggunakan `/api/laporan/upload-foto`, mengunggah berkas dengan signed token Supabase Storage, lalu mengirim storage path ke API laporan. Alur ini perlu diuji di project Supabase tim.
+- Backend terbaru mengatur bucket `laporan-foto` publik lewat migrasi `014_storage_buckets.sql` dan mengubah storage path menjadi URL gambar. FE telah menyamakan batas unggah menjadi 5 MB.
+- Data offline tetap tersedia untuk styling dan alur UI. Kiriman offline tidak masuk ke database dan hanya terlihat di browser yang membuatnya; aplikasi tidak menampilkan banner mode.
+- Untuk live, jalankan hanya migrasi yang sudah dikonfirmasi backend; `016_seed_laporan_simulasi.sql` jangan diterapkan pada project produksi.
 
 ---
 
 ## 8. Checklist yang Perlu FE Lakukan
 
-- [ ] Pastikan form pelaporan memiliki validasi minimal sesuai skema Zod (judul min. 5 huruf, deskripsi min. 20 huruf).
-- [ ] Koordinat form pelaporan dibatasi di dalam Kota Surakarta (Lon: 110.77-110.87, Lat: -7.60 s/d -7.52).
-- [ ] Di halaman *Peta Laporan*, bedakan warna/bentuk marker status (Baru, Diproses, Selesai).
-- [ ] Di modul *Perubahan Nyatanya*, tampilkan perbandingan foto sebelum dan sesudah secara *side-by-side* / *slider*.
-- [ ] Gunakan data mock di folder `mocks/` jika ingin styling komponen secara instan tanpa menunggu database.
+- [x] Form login/daftar memakai Supabase Auth; pendaftaran publik mendapat role `warga`.
+- [x] Dashboard dan peta mempunyai filter serta state memuat/error/kosong.
+- [ ] Verifikasi form laporan, validasi koordinat, serta transisi dan marker status bersama kontrak API terbaru.
+- [x] Hubungkan pemilih foto dengan signed upload URL dan kirim storage path pada pembuatan laporan.
+- [ ] Sediakan signed read URL atau mekanisme terproteksi untuk menampilkan foto dari bucket privat.
+- [ ] Jangan menampilkan data offline seolah-olah data live; UI tidak perlu menampilkan badge mode, tetapi tim harus mengetahui sumber data saat pengujian.
 
 ---
 
-## 9. Panduan Deploy & Keamanan Produksi (Staging & Production)
+## 9. Catatan Handoff untuk Backend
 
-### A. Pengaturan Secret Manager Hosting (Vercel / Cloud Provider)
-Pastikan environment variables berikut disetel pada dashboard hosting:
-1. `NEXT_PUBLIC_USE_MOCK=false` (Wajib: agar aplikasi membaca database nyata).
-2. `NEXT_PUBLIC_APP_URL=https://nama-domain-kamu.vercel.app` (Wajib berprotokol HTTPS).
-3. `NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co`
-4. `NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>`
-5. `SUPABASE_SERVICE_ROLE_KEY=<service-role-key>` $\rightarrow$ **SANGAT PENTING: Hanya set di Server Environment. JANGAN PERNAH menambahkan prefix `NEXT_PUBLIC_` atau memasukkannya ke bundle/repo!**
+- Cocokkan kontrak endpoint dan bentuk respons/error di atas dengan implementasi API yang benar-benar dideploy. Pastikan kategori memakai UUID, bukan nama/slug, dan koordinat divalidasi terhadap wilayah Surakarta.
+- **Perbaikan wajib di backend sebelum laporan live:** ZIP backend memakai Zod 4 `.uuid()` untuk `kategori_id`, tetapi enam UUID kategori hasil seed (misalnya `c1111111-0000-0000-0000-000000000001`) tidak memiliki bit versi/varian RFC. Karena itu Zod menolak ID yang valid untuk kolom UUID PostgreSQL. FE memakai validasi format UUID PostgreSQL (8-4-4-4-12 karakter heksadesimal); samakan validator `kategori_id` pada `BuatLaporanInputSchema` dan `LaporanSerupaQuerySchema` di BE. Terapkan juga untuk `kelurahan_id` bila ID seed wilayah memakai format yang sama. Jangan mengganti ID seed yang sudah direferensikan di database tanpa migrasi relasi yang aman.
+- Pastikan semua endpoint privat memverifikasi access token Supabase dan role di server. Registrasi publik hanya boleh membuat `warga`; pemberian role `petugas`/`admin` harus lewat jalur administrator yang terproteksi.
+- Tinjau kebijakan bucket/RLS `laporan-foto` dan uji signed upload endpoint. Frontend telah meminta signed URL, mengunggah file yang didukung, dan menyimpan storage path pada laporan.
+- Tambahkan/konfirmasi mekanisme signed read URL untuk menampilkan foto dari bucket privat; jangan menganggap storage path sebagai URL publik.
+- Diagnostik lokal: publishable key dapat membaca view `laporan_publik`, tetapi query dengan server secret ditolak Supabase sebagai `Invalid API key`. Endpoint GET publik, referensi, peta, dan dashboard kini memakai publishable key dengan hak minimum; data laporan publik hanya mengambil laporan `sumber=asli`/non-simulasi. Operasi tulis, upload, serta operasi admin/server yang memerlukan hak istimewa tetap membutuhkan server secret yang valid dari project yang sama.
+- Data offline masih dapat ditampilkan jika `NEXT_PUBLIC_USE_MOCK=true`; laporan offline hanya tersimpan di browser dan tidak masuk database. Untuk pengujian API live, nonaktifkan mock dan pastikan error konfigurasi tidak disamarkan menjadi data kosong.
+- File migrasi `014_storage_buckets.sql` telah disalin dari ZIP backend terbaru. Nomor `012` masih tidak tersedia; konfirmasi ke BE apakah memang tidak diperlukan. Jangan jalankan `016_seed_laporan_simulasi.sql` pada project produksi.
+- `laporan_rows.csv` berisi 200 baris dan seluruhnya `is_simulasi=true` dengan provenance simulasi. Jangan impor sebagai laporan live atau tampilkan pada halaman publik.
+- Smoke test lokal: kategori, wilayah, sumber data, laporan publik, peta, dan endpoint dashboard mengembalikan HTTP 200; dashboard waktu penanganan masih 500 karena `fn_dashboard_waktu_penanganan` gagal dengan SQLSTATE `42804` (struktur hasil query tidak sesuai return type). Hasil daftar publik, peta, dan laporan serupa kosong karena database belum memiliki laporan nyata; CSV yang diperiksa seluruhnya data simulasi. Terapkan perbaikan fungsi SQL di `008_views_functions.sql` pada staging setelah ditinjau.
+- Server secret yang tersedia di environment ditolak Supabase sebagai `Invalid API key`. Ganti dengan secret aktif dari project yang sama sebelum menguji pembuatan laporan, upload, autentikasi/operasi server, dan admin. Endpoint terlindungi menolak permintaan tanpa sesi (profil/antrean/laporan pribadi 401, admin 403).
 
-### B. Pengaturan Supabase Dashboard
-1. **Redirect URLs**:
-   Di Supabase Dashboard $\rightarrow$ **Authentication** $\rightarrow$ **URL Configuration**:
-   - Set **Site URL** ke domain HTTPS hosting kamu (mis. `https://rampung.vercel.app`).
-   - Tambahkan **Redirect URLs**: `https://rampung.vercel.app/**`, `https://rampung.vercel.app/auth/callback`, dan `http://localhost:3000/**`.
-2. **Aturan Role Akun Publik**:
-   - Pendaftaran akun publik lewat form registrasi warga secara otomatis **hanya akan mendapatkan role `warga`** (diatur ketat oleh trigger database `handle_new_user()` dan RLS).
-   - Pengangkatan akun menjadi `petugas` atau `admin` hanya bisa dilakukan oleh Super Admin via endpoint `/api/admin/users/:id/role`.
-3. **Migrasi Database di Produksi**:
-   - Jalankan migrasi `001_extensions.sql` sampai `015_insert_rekap_ulas.sql` (termasuk `014_storage_buckets.sql`).
-   - **PERINGATAN:** File `016_seed_laporan_simulasi.sql` **JANGAN DIJALANKAN DI PRODUKSI** (file tersebut khusus staging/demo lokal agar juri dapat melihat visualisasi 200 data).
+## 10. Checklist Handoff untuk Deploy
 
-
+- Isi environment variable di secret manager hosting, bukan di repository. Untuk production set `NEXT_PUBLIC_USE_MOCK=false`, `NEXT_PUBLIC_APP_URL` ke domain HTTPS final, `NEXT_PUBLIC_SUPABASE_URL`, dan `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Tambahkan `SUPABASE_SERVICE_ROLE_KEY` hanya sebagai secret server-side. Jangan memberi awalan `NEXT_PUBLIC_`, jangan masukkan ke bundle browser, dan jangan kirim melalui chat/log.
+- Atur Site URL serta allowed redirect URLs di Supabase Auth ke domain deployment yang benar. Terapkan migrasi database yang sudah dikonfirmasi backend; jangan seed data simulasi ke database live.
+- Jika memakai Turnstile, konfigurasi site key dan secret key pada environment yang sesuai. Gemini, Redis, serta email bersifat opsional; uji fallback ketika tidak dikonfigurasi.
+- Sebelum rilis, jalankan build, uji daftar/masuk/profil dengan akun warga dan admin terpisah, kirim laporan, cek hak akses endpoint, peta, serta upload foto di staging. Pastikan environment production tidak menggunakan data mock dan seluruh akses memakai HTTPS.

@@ -9,9 +9,10 @@ import { BuatLaporanInput, LaporanPublikFilter, LaporanPublikItem } from '../con
 import { UbahStatusInput } from '../contracts/petugas';
 import { KonfirmasiInput } from '../contracts/konfirmasi';
 import { DashboardFilter, RingkasanLanding, TrenBulananItem, WaktuPenangananItem, PerKapitaItem, CivicInsight } from '../contracts/dashboard';
+import { fetchAuthed } from './supabase';
 
 async function fetcher<T>(url: string, init?: RequestInit): Promise<ApiResponse<T>> {
-  const res = await fetch(url, {
+  const res = await fetchAuthed(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -21,26 +22,8 @@ async function fetcher<T>(url: string, init?: RequestInit): Promise<ApiResponse<
   return res.json();
 }
 
-export function dapatkanUrlFoto(path: string): string {
-  if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  const clean = path.replace(/^\/+/, '');
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
-  return `${supabaseUrl}/storage/v1/object/public/laporan-foto/${clean}`;
-}
-
 export const rampungApi = {
   laporan: {
-    uploadFoto: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/laporan/upload-foto', {
-        method: 'POST',
-        body: formData,
-      });
-      return res.json() as Promise<ApiResponse<{ file_path: string; public_url: string; thumbnail_url: string }>>;
-    },
-
     buat: (payload: BuatLaporanInput) =>
       fetcher<{ id: string; kode_lacak: string; status: string; penanda: string[]; saran_perbaikan: string[] }>(
         '/api/laporan',
@@ -97,16 +80,6 @@ export const rampungApi = {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
-
-    uploadFotoSesudah: async (laporanId: string, file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`/api/petugas/laporan/${laporanId}/upload-sesudah`, {
-        method: 'POST',
-        body: formData,
-      });
-      return res.json() as Promise<ApiResponse<{ file_path: string; public_url: string; thumbnail_url: string }>>;
-    },
   },
 
   dashboard: {
@@ -163,14 +136,4 @@ export const rampungApi = {
       return fetcher<any>(`/api/peta/laporan?${q.toString()}`);
     },
   },
-
-  auth: {
-    getProfil: () => fetcher<any>('/api/auth/profile'),
-    updateProfil: (data: { nama: string; no_telepon?: string | null }) =>
-      fetcher<any>('/api/auth/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }),
-  },
 };
-

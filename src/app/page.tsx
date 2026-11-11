@@ -71,7 +71,9 @@ export default function Beranda() {
     const cocokKategori = filterKategori === 'semua' || laporan.kategori_slug === filterKategori;
     return cocokKecamatan && cocokStatus && cocokKategori;
   }), [filterKec, filterKategori, filterStatus, laporanList]);
-  const firstLaporan = laporanList?.find((l) => l.foto_sebelum_paths?.length) || laporanList?.[0];
+  const firstLaporan = laporanList?.[0];
+  const fotoSebelum = firstLaporan?.foto_sebelum_paths?.[0];
+  const fotoSesudah = firstLaporan?.foto_sesudah_paths?.[0];
   const laporanTerkini = laporanTersaring
     .slice(0, 3);
   const trenTerbaru = dash?.tren.slice(-4) || [];
@@ -419,9 +421,9 @@ export default function Beranda() {
                 <div>
                   <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-navy/70">Sebelum Perbaikan</span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {firstLaporan.foto_sebelum_paths?.[0] ? (
+                    {fotoSebelum ? (
                       <Image
-                        src={firstLaporan.foto_sebelum_paths[0]}
+                        src={fotoSebelum}
                         alt="Kondisi sebelum perbaikan"
                         fill
                         className="object-cover"
@@ -441,9 +443,9 @@ export default function Beranda() {
                     {firstLaporan.status === 'selesai' ? 'Sesudah (Tuntas)' : 'Foto Pembaruan'}
                   </span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {firstLaporan.foto_sesudah_paths?.[0] ? (
+                    {fotoSesudah ? (
                       <Image
-                        src={firstLaporan.foto_sesudah_paths[0]}
+                        src={fotoSesudah}
                         alt="Kondisi sesudah perbaikan"
                         fill
                         className="object-cover"

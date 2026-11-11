@@ -15,7 +15,7 @@ Membuat aduan baru (bisa dilakukan secara anonim atau terdaftar).
 {
   "judul": "Lubang aspal jalan di dekat halte",
   "deskripsi": "Aspal berlubang cukup dalam sekitar 40cm, sangat membahayakan pengendara motor terutama saat hujan.",
-  "kategori_id": "c1111111-0000-0000-0000-000000000001",
+  "kategori_id": "a1111111-0000-4000-8000-000000000001",
   "kelurahan_id": "c1000000-0000-0000-0000-000000000001",
   "latitude": -7.5612,
   "longitude": 110.8034,
@@ -53,7 +53,7 @@ Melacak perkembangan penanganan tiket berdasarkan kode lacak unik.
 {
   "data": {
     "laporan": {
-      "id": "f0000000-0000-0000-0000-000000000001",
+      "id": "s0000000-0000-0000-0000-000000000001",
       "kode_lacak": "RPG-SIM00001",
       "judul": "Aspal amblas di dekat persimpangan",
       "status": "selesai",
@@ -104,7 +104,7 @@ Mendeteksi apakah sudah ada laporan bertopik serupa di sekitar lokasi sebelum wa
 {
   "data": [
     {
-      "id": "f0000000-0000-0000-0000-000000000001",
+      "id": "s0000000-0000-0000-0000-000000000001",
       "kode_lacak": "RPG-SIM00001",
       "judul": "Aspal amblas di dekat persimpangan",
       "kategori": "Penambalan Aspal",
@@ -160,4 +160,3 @@ Memperbarui status tiket penanganan oleh petugas berwenang (State Machine Enforc
 - `GET /api/dashboard/umur-laporan` — Distribusi umur laporan yang belum selesai
 - `GET /api/dashboard/insight` — Kalimat wawasan deskriptif otomatis
 - `GET /api/referensi/sumber-data` — Metadata "Dari Mana Data Ini?"
-
