@@ -7,10 +7,14 @@
 import { NextRequest } from 'next/server';
 import { apiSukses, apiError } from '@/lib/server/response';
 import { dapatkanKonteksAuth } from '@/lib/server/auth';
-import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { isSupabaseConfigured, supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(req: NextRequest) {
   try {
+    if (!isSupabaseConfigured()) {
+      return apiError('SERVICE_UNAVAILABLE', 'Layanan akun belum dikonfigurasi.');
+    }
+
     const auth = await dapatkanKonteksAuth();
     if (!auth.isAuthenticated || auth.role !== 'admin') {
       return apiError('FORBIDDEN', 'Akses khusus administrator sistem');

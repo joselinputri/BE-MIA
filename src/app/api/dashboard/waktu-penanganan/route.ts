@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { DashboardFilterSchema } from '@/lib/contracts/dashboard';
 import { apiSukses, apiError } from '@/lib/server/response';
-import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { isSupabaseConfigured, supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,10 +19,11 @@ export async function GET(req: NextRequest) {
     }
 
     const { periode_mulai, periode_akhir, kategori, kecamatan, sumber } = parsed.data;
+    const tahunBerjalan = new Date().getFullYear();
 
     const { data, error } = await supabaseAdmin.rpc('fn_dashboard_waktu_penanganan', {
-      p_periode_mulai: periode_mulai || '2026-01-01',
-      p_periode_akhir: periode_akhir || '2026-12-31',
+      p_periode_mulai: periode_mulai || `${tahunBerjalan}-01-01`,
+      p_periode_akhir: periode_akhir || `${tahunBerjalan}-12-31`,
       p_kategori_slug: kategori || null,
       p_kecamatan_kode: kecamatan || null,
       p_sumber: sumber || 'semua',

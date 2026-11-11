@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { DashboardFilterSchema } from '@/lib/contracts/dashboard';
 import { apiSukses, apiError } from '@/lib/server/response';
-import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { isSupabaseConfigured, supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,21 +20,21 @@ export async function GET(req: NextRequest) {
 
     const { kategori, kecamatan, sumber } = parsed.data;
 
+    if (!isSupabaseConfigured()) {
+      return apiError('SERVICE_UNAVAILABLE', 'Supabase belum dikonfigurasi untuk memuat umur laporan.');
+    }
+
     const { data, error } = await supabaseAdmin.rpc('fn_dashboard_umur_laporan', {
       p_kategori_slug: kategori || null,
       p_kecamatan_kode: kecamatan || null,
-      p_sumber: sumber || 'semua',
+      p_sumber: sumber === 'simulasi' ? 'simulasi' : 'asli',
     });
 
-    const fallback = [
-      { rentang_hari: '0-3 hari', jumlah: 14, jumlah_terlambat: 0 },
-      { rentang_hari: '4-7 hari', jumlah: 8, jumlah_terlambat: 1 },
-      { rentang_hari: '8-14 hari', jumlah: 3, jumlah_terlambat: 2 },
-      { rentang_hari: '15-30 hari', jumlah: 1, jumlah_terlambat: 1 },
-      { rentang_hari: '> 30 hari', jumlah: 0, jumlah_terlambat: 0 },
-    ];
+    if (error) {
+      return apiError('INTERNAL_ERROR', 'Gagal memuat umur laporan. Pastikan migrasi fungsi dashboard sudah dijalankan.');
+    }
 
-    return apiSukses(data || fallback, {
+    return apiSukses(data || [], {
       sumber: [
         {
           provenance: sumber === 'asli' ? 'asli' : 'simulasi_terkalibrasi',

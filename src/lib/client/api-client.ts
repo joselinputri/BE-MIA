@@ -163,5 +163,14 @@ export const rampungApi = {
       return fetcher<any>(`/api/peta/laporan?${q.toString()}`);
     },
   },
+
+  auth: {
+    getProfil: () => fetcher<any>('/api/auth/profile'),
+    updateProfil: (data: { nama: string; no_telepon?: string | null }) =>
+      fetcher<any>('/api/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+  },
 };
 
