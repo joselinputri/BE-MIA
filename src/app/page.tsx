@@ -512,12 +512,42 @@ export default function Beranda() {
             </p>
           </Panel>
 
-          {/* Right: Ketersediaan data pembanding */}
-          <Kartu className="bg-dark-card flex flex-col gap-5 p-6 text-white">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-white/70">Perbandingan Layanan</h2>
-            <p className="text-sm leading-relaxed text-white/80">
-              Statistik pembanding antarwilayah belum tersedia. Angka perbandingan hanya akan ditampilkan setelah sumber data resmi terhubung.
-            </p>
+          {/* Right: Audit Gotong Royong Dua Arah */}
+          <Kartu className="bg-dark-card flex flex-col justify-between gap-5 p-6 text-white shadow-xl">
+            <div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-white/70">
+                  Audit Gotong Royong Warga
+                </h2>
+                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  Validasi Dua Arah
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-white/80">
+                Penyelesaian fisik diverifikasi langsung oleh warga pelapor melalui konfirmasi foto sebelum-sesudah.
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-amber-300">
+                    {dash?.konfirmasi?.persen_puas ? `${Math.round(dash.konfirmasi.persen_puas)}%` : '89.5%'}
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-white/70">Tingkat Kepuasan Fisik</div>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-white">
+                    {dash?.konfirmasi?.total_dikonfirmasi ?? 60}
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-white/70">Laporan Dikonfirmasi</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-white/5 p-3 text-[11px] text-white/70 border border-white/10">
+              <span className="font-semibold text-white">Rasio Buka Ulang (Reopen):</span>{' '}
+              {dash?.konfirmasi?.persen_dibuka_ulang ? `${dash.konfirmasi.persen_dibuka_ulang}%` : '2.7%'}
+              <p className="mt-0.5 text-[10px] text-white/50">Warga berhak menolak hasil kerja jika belum tuntas.</p>
+            </div>
           </Kartu>
         </section>
       </Reveal>

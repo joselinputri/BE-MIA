@@ -137,6 +137,30 @@ export default function PapanTanggapPage() {
         </section>
       </Reveal>
 
+      {!loading && !dashboard?.error && (ringkasan?.kinerja_dinas.length ?? 0) > 0 && (
+        <Reveal delay={200}>
+          <section className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm">
+            <h2 className="text-lg font-extrabold text-navy">Kinerja Dinas Pengampu Fasilitas Kota</h2>
+            <p className="mt-1 text-xs text-navy/70">Tingkat penyelesaian dan responsivitas per dinas di Kota Surakarta.</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {ringkasan?.kinerja_dinas.map((d) => (
+                <div key={d.singkatan} className="rounded-2xl bg-white/80 p-4 border border-navy/5 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-navy">{d.singkatan}</span>
+                    <span className="text-xs font-bold text-crimson">{d.persen_tuntas}% tuntas</span>
+                  </div>
+                  <p className="text-[11px] text-slate line-clamp-1">{d.nama}</p>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-lilac/30">
+                    <div className="h-full rounded-full bg-crimson" style={{ width: `${Math.min(100, Math.max(0, d.persen_tuntas))}%` }} />
+                  </div>
+                  <div className="text-[10px] text-slate/70 text-right">Rata-rata: {d.rata_hari} hari</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </Reveal>
+      )}
+
       {!loading && !dashboard?.error && (ringkasan?.kinerja_dinas.length ?? 0) === 0 && (
         <p className="rounded-2xl border border-navy/10 bg-white/70 p-4 text-sm text-navy/70">
           Data kinerja per dinas belum disediakan backend, jadi peringkat dan angka dinas tidak ditampilkan.
