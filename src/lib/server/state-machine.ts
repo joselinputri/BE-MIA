@@ -42,6 +42,21 @@ export function validasiTransisiStatus(
       }
       return { valid: true, pesan: 'OK' };
     }
+    if (statusKe === 'sedang_ditangani') {
+      if (role !== 'petugas' && role !== 'admin') {
+        return { valid: false, pesan: 'Hanya petugas atau admin yang berhak memulai penanganan' };
+      }
+      return { valid: true, pesan: 'OK' };
+    }
+    if (statusKe === 'selesai') {
+      if (role !== 'petugas' && role !== 'admin') {
+        return { valid: false, pesan: 'Hanya petugas atau admin yang berhak menyelesaikan laporan' };
+      }
+      if (!fotoSesudah || fotoSesudah.length === 0) {
+        return { valid: false, pesan: 'Penyelesaian laporan wajib menyertakan foto bukti pengerjaan sesudah' };
+      }
+      return { valid: true, pesan: 'OK' };
+    }
     if (statusKe === 'ditolak') {
       if (role !== 'petugas' && role !== 'admin') {
         return { valid: false, pesan: 'Hanya petugas atau admin yang berhak menolak laporan' };
@@ -58,6 +73,15 @@ export function validasiTransisiStatus(
     if (statusKe === 'sedang_ditangani') {
       if (role !== 'petugas' && role !== 'admin') {
         return { valid: false, pesan: 'Hanya petugas atau admin yang berhak memulai penanganan' };
+      }
+      return { valid: true, pesan: 'OK' };
+    }
+    if (statusKe === 'selesai') {
+      if (role !== 'petugas' && role !== 'admin') {
+        return { valid: false, pesan: 'Hanya petugas atau admin yang berhak menyelesaikan laporan' };
+      }
+      if (!fotoSesudah || fotoSesudah.length === 0) {
+        return { valid: false, pesan: 'Penyelesaian laporan wajib menyertakan foto bukti pengerjaan sesudah' };
       }
       return { valid: true, pesan: 'OK' };
     }

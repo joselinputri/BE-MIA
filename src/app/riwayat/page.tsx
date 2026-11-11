@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -18,6 +19,10 @@ import {
   PhoneCall,
   UserCheck,
   Sparkles,
+  Upload,
+  Camera,
+  CheckSquare,
+  Loader2,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { PageHero, Panel, Kartu, Pil, tombolDasar } from '@/components/ui';
@@ -30,9 +35,11 @@ import {
   type Laporan,
 } from '@/lib/client/data';
 import { useAsync } from '@/lib/client/hooks';
+import { useAuth } from '@/lib/client/auth';
+import { fetchAuthed } from '@/lib/client/supabase';
 import { cn } from '@/lib/utils';
 
-export function cekIndikasiSpam(laporan?: Laporan | null): boolean {
+function cekIndikasiSpam(laporan?: Laporan | null): boolean {
   if (!laporan) return false;
   if (laporan.penanda?.includes('perlu_verifikasi_tambahan')) return true;
   const gabung = `${laporan.judul || ''} ${laporan.deskripsi || ''}`.toLowerCase();
@@ -54,6 +61,98 @@ function RiwayatContent() {
   const [copyNotice, setCopyNotice] = useState<boolean>(false);
   const [aksiNotice, setAksiNotice] = useState<string | null>(null);
   const currentLap = activeTicket;
+  const { pengguna } = useAuth();
+  const isPetugasOrAdmin = pengguna?.peran === 'petugas' || pengguna?.peran === 'admin';
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // State khusus aksi petugas
+  const [berkasFotoSesudah, setBerkasFotoSesudah] = useState<File | null>(null);
+  const [previewFotoSesudah, setPreviewFotoSesudah] = useState<string | null>(null);
+  const [catatanPetugas, setCatatanPetugas] = useState<string>(
+    'Pekerjaan penanganan dan perbaikan fisik telah tuntas diselesaikan oleh Regu Reaksi Cepat di lokasi.'
+  );
+  const [sedangUploadPetugas, setSedangUploadPetugas] = useState<boolean>(false);
+  const [pesanPetugas, setPesanPetugas] = useState<{ tipe: 'sukses' | 'error'; teks: string } | null>(null);
+
+  const handlePilihFotoSesudah = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPesanPetugas({ tipe: 'error', teks: 'Format berkas wajib berupa gambar citra (JPEG/PNG/WebP).' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPesanPetugas({ tipe: 'error', teks: 'Ukuran foto maksimal 5 MB.' });
+      return;
+    }
+    setBerkasFotoSesudah(file);
+    setPreviewFotoSesudah(URL.createObjectURL(file));
+    setPesanPetugas(null);
+  };
+
+  const handleSelesaikanAduan = async () => {
+    if (!currentLap) return;
+    if (!berkasFotoSesudah) {
+      setPesanPetugas({ tipe: 'error', teks: 'Wajib memilih foto bukti sesudah perbaikan terlebih dahulu.' });
+      return;
+    }
+    if (!catatanPetugas || catatanPetugas.trim().length < 10) {
+      setPesanPetugas({ tipe: 'error', teks: 'Catatan penanganan wajib diisi minimal 10 karakter.' });
+      return;
+    }
+
+    setSedangUploadPetugas(true);
+    setPesanPetugas(null);
+    try {
+      // 1. Upload foto bukti sesudah ke bucket laporan-foto
+      const formData = new FormData();
+      formData.append('file', berkasFotoSesudah);
+
+      const uploadRes = await fetchAuthed(`/api/petugas/laporan/${currentLap.id}/upload-sesudah`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadJson = await uploadRes.json();
+      if (!uploadRes.ok) {
+        throw new Error(uploadJson.error?.pesan || 'Gagal mengunggah foto sesudah ke server storage.');
+      }
+
+      const filePath = uploadJson.data?.file_path;
+
+      // 2. Perbarui status laporan menjadi 'selesai'
+      const statusRes = await fetchAuthed(`/api/petugas/laporan/${currentLap.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status_ke: 'selesai',
+          catatan: catatanPetugas,
+          foto_sesudah_paths: [filePath],
+        }),
+      });
+
+      const statusJson = await statusRes.json();
+      if (!statusRes.ok) {
+        throw new Error(statusJson.error?.pesan || 'Gagal memperbarui status laporan.');
+      }
+
+      setPesanPetugas({
+        tipe: 'sukses',
+        teks: 'Foto bukti berhasil disimpan dan status laporan telah resmi berubah menjadi SELESAI!',
+      });
+      setBerkasFotoSesudah(null);
+
+      // Muat ulang data tiket
+      const updated = await lacak(activeKode);
+      if (updated) {
+        setActiveTicket(updated);
+      }
+    } catch (err: any) {
+      setPesanPetugas({ tipe: 'error', teks: err?.message || 'Gagal memproses penanganan laporan.' });
+    } finally {
+      setSedangUploadPetugas(false);
+    }
+  };
 
   useEffect(() => {
     let aktif = true;
@@ -528,6 +627,161 @@ function RiwayatContent() {
                   </div>
                 </div>
               </div>
+
+              {/* ── Panel Petugas: Bukti Sesudah & Selesaikan Aduan ── */}
+              {isPetugasOrAdmin && currentLap && currentLap.status !== 'selesai' && currentLap.status !== 'ditolak' && (
+                <div className="bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-emerald-500 text-white rounded-xl shadow-sm">
+                        <CheckSquare className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-navy">
+                          Panel Tindak Lanjut Petugas Lapangan
+                        </h3>
+                        <p className="text-xs text-navy/70">
+                          Unggah foto bukti sesudah perbaikan fisik untuk menuntaskan tiket aduan ini.
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-1 bg-emerald-600/15 text-emerald-800 rounded-lg border border-emerald-600/30">
+                      Peran: {pengguna?.peran?.toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* Area Pilih & Pratinjau Foto Bukti */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-bold text-navy">
+                      1. Foto Bukti Fisik Sesudah Perbaikan (Wajib)
+                    </label>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handlePilihFotoSesudah}
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                    />
+
+                    {previewFotoSesudah ? (
+                      <div className="relative rounded-xl overflow-hidden border border-emerald-500/30 max-w-md bg-slate-900">
+                        <img
+                          src={previewFotoSesudah}
+                          alt="Pratinjau Foto Sesudah"
+                          className="w-full h-48 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute bottom-2.5 right-2.5 bg-black/70 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg backdrop-blur transition flex items-center gap-1.5"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Ganti Foto
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-emerald-500/40 rounded-xl bg-white hover:bg-emerald-500/5 text-emerald-800 text-xs font-bold transition shadow-sm"
+                      >
+                        <Upload className="w-4 h-4 text-emerald-600" />
+                        Pilih / Ambil Foto Bukti Sesudah
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Catatan Tindakan */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-navy">
+                      2. Catatan Penanganan & Berita Acara Singkat
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={catatanPetugas}
+                      onChange={(e) => setCatatanPetugas(e.target.value)}
+                      placeholder="Uraikan tindakan perbaikan yang telah dilakukan di lapangan..."
+                      className="w-full rounded-xl border border-navy/20 p-3 text-xs text-navy focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                    />
+                  </div>
+
+                  {/* Pesan Notifikasi Sukses / Error */}
+                  {pesanPetugas && (
+                    <div
+                      className={cn(
+                        'p-3 rounded-xl text-xs font-medium border flex items-center gap-2',
+                        pesanPetugas.tipe === 'sukses'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      )}
+                    >
+                      {pesanPetugas.tipe === 'sukses' ? (
+                        <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                      )}
+                      <span>{pesanPetugas.teks}</span>
+                    </div>
+                  )}
+
+                  {/* Tombol Eksekusi Penuntasan */}
+                  <div className="pt-2 flex items-center gap-3 flex-wrap">
+                    <button
+                      type="button"
+                      disabled={sedangUploadPetugas || !berkasFotoSesudah}
+                      onClick={handleSelesaikanAduan}
+                      className={cn(
+                        'px-5 py-2.5 rounded-xl text-xs font-extrabold text-white flex items-center gap-2 shadow-sm transition',
+                        sedangUploadPetugas || !berkasFotoSesudah
+                          ? 'bg-emerald-600/50 cursor-not-allowed'
+                          : 'bg-emerald-600 hover:bg-emerald-700 active:scale-95'
+                      )}
+                    >
+                      {sedangUploadPetugas ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Menyimpan Bukti & Menuntaskan...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Selesaikan Aduan & Unggah Bukti
+                        </>
+                      )}
+                    </button>
+                    <p className="text-[11px] text-navy/60">
+                      Tindakan ini akan mengunggah berkas ke storage aman dan memvalidasi transisi status menjadi &apos;selesai&apos;.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Banner Panduan jika pengguna belum dalam peran Petugas */}
+              {!isPetugasOrAdmin && currentLap && currentLap.status !== 'selesai' && (
+                <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-500/10 text-amber-700 rounded-xl">
+                      <UserCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-extrabold text-navy">
+                        Ingin mencoba alur Petugas Lapangan (Upload Foto Sesudah)?
+                      </p>
+                      <p className="text-[11px] text-navy/70">
+                        {pengguna
+                          ? 'Ubah peran Anda menjadi "Petugas (DPUPR)" melalui halaman Profil untuk membuka formulir penyelesaian tiket ini.'
+                          : 'Silakan Masuk / Daftar akun terlebih dahulu, lalu pilih peran "Petugas (DPUPR)" di halaman Profil.'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={pengguna ? '/profil' : '/masuk'}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy/90 transition shadow-sm"
+                  >
+                    {pengguna ? 'Buka Profil & Ganti Peran' : 'Masuk Sekarang'}
+                  </Link>
+                </div>
+              )}
 
               {/* ── Catatan teknis yang tersimpan ── */}
               <div className="bg-card p-4 sm:p-5 rounded-2xl border border-navy/10 space-y-3">

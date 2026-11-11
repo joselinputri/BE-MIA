@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserRound, Mail, ShieldCheck, Save, ClipboardList, LogOut } from 'lucide-react';
+import { UserRound, Mail, ShieldCheck, Save, ClipboardList, LogOut, RefreshCw } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { useAuth } from '@/lib/client/auth';
+import { fetchAuthed } from '@/lib/client/supabase';
+import { cn } from '@/lib/utils';
 
 const LABEL_PERAN = {
   warga: 'Warga',
-  petugas: 'Petugas',
+  petugas: 'Petugas Lapangan (DPUPR)',
   admin: 'Administrator',
 } as const;
 
@@ -21,6 +23,7 @@ export default function ProfilPage() {
   const [pesan, setPesan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
 
   useEffect(() => {
     if (siap && !pengguna) router.replace('/masuk');
@@ -42,6 +45,29 @@ export default function ProfilPage() {
     setSaving(false);
     if (result) setError(result);
     else setPesan('Profil berhasil diperbarui.');
+  }
+
+  async function handleSwitchRole(roleBaru: 'warga' | 'petugas' | 'admin', dinas = 'DPUPR') {
+    setError(null);
+    setPesan(null);
+    setSwitchingRole(true);
+    try {
+      const res = await fetchAuthed('/api/auth/switch-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: roleBaru, dinas }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.pesan || 'Gagal mengubah peran.');
+      setPesan(`Peran akun berhasil diubah menjadi ${roleBaru.toUpperCase()}${roleBaru === 'petugas' ? ` (${dinas})` : ''}! Menyinkronkan...`);
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
+    } catch (err: any) {
+      setError(err?.message || 'Gagal mengubah peran akun.');
+    } finally {
+      setSwitchingRole(false);
+    }
   }
 
   async function handleKeluar() {
@@ -117,6 +143,68 @@ export default function ProfilPage() {
               {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
             </button>
           </form>
+
+          {/* ── Simulasi & Switch Peran (Warga / Petugas / Admin) ── */}
+          <div className="rounded-2xl border border-navy/15 bg-white p-5 space-y-3 mt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-extrabold text-navy">Simulasi Peran Pengguna (Uji Coba Petugas)</h3>
+                <p className="text-xs text-navy/70 mt-0.5">
+                  Klik salah satu peran di bawah ini untuk menguji hak akses penanganan aduan & unggah foto bukti sesudah.
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold bg-navy text-white px-2.5 py-1 rounded-md">
+                Status: {pengguna.peran.toUpperCase()}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={switchingRole || pengguna.peran === 'warga'}
+                onClick={() => handleSwitchRole('warga')}
+                className={cn(
+                  'p-3 rounded-xl border text-xs font-bold transition-all text-center',
+                  pengguna.peran === 'warga'
+                    ? 'border-crimson bg-crimson/10 text-crimson shadow-sm ring-1 ring-crimson'
+                    : 'border-navy/15 bg-card hover:bg-navy/5 text-navy hover:border-navy/30'
+                )}
+              >
+                👤 Warga Biasa
+              </button>
+              <button
+                type="button"
+                disabled={switchingRole || pengguna.peran === 'petugas'}
+                onClick={() => handleSwitchRole('petugas', 'DPUPR')}
+                className={cn(
+                  'p-3 rounded-xl border text-xs font-bold transition-all text-center',
+                  pengguna.peran === 'petugas'
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-500'
+                    : 'border-navy/15 bg-card hover:bg-navy/5 text-navy hover:border-navy/30'
+                )}
+              >
+                👷 Petugas (DPUPR)
+              </button>
+              <button
+                type="button"
+                disabled={switchingRole || pengguna.peran === 'admin'}
+                onClick={() => handleSwitchRole('admin')}
+                className={cn(
+                  'p-3 rounded-xl border text-xs font-bold transition-all text-center',
+                  pengguna.peran === 'admin'
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-800 shadow-sm ring-1 ring-indigo-500'
+                    : 'border-navy/15 bg-card hover:bg-navy/5 text-navy hover:border-navy/30'
+                )}
+              >
+                🛡️ Administrator
+              </button>
+            </div>
+            {switchingRole && (
+              <p className="text-xs font-semibold text-emerald-700 animate-pulse flex items-center gap-1.5 pt-1">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Memperbarui peran akun di Supabase...
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-wrap gap-3 border-t border-navy/10 pt-5">
             <Link href="/riwayat" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-navy/20 bg-white px-4 text-sm font-bold text-navy hover:bg-card">

@@ -24,7 +24,8 @@ export async function POST(
 ) {
     const { id: _laporanId } = await params;
   try {
-    const auth = await dapatkanKonteksAuth();
+    const authHeader = req.headers.get('authorization') || undefined;
+    const auth = await dapatkanKonteksAuth(authHeader);
     if (!auth.isAuthenticated || (auth.role !== 'petugas' && auth.role !== 'admin')) {
       return apiError('FORBIDDEN', 'Hanya petugas atau admin yang berhak mengunggah foto sesudah');
     }

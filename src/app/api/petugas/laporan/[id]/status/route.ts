@@ -17,7 +17,8 @@ export async function PATCH(
 ) {
   try {
     const { id: laporanId } = await params;
-    const auth = await dapatkanKonteksAuth();
+    const authHeader = req.headers.get('authorization') || undefined;
+    const auth = await dapatkanKonteksAuth(authHeader);
 
     if (!auth.isAuthenticated || (auth.role !== 'petugas' && auth.role !== 'admin')) {
       return apiError('FORBIDDEN', 'Hanya petugas atau admin yang berhak mengubah status tiket');
@@ -42,8 +43,8 @@ export async function PATCH(
       return apiError('NOT_FOUND', 'Laporan tidak ditemukan');
     }
 
-    // Otorisasi dinas: Petugas hanya dapat menangani laporan dinasnya sendiri
-    if (auth.role === 'petugas' && auth.dinasId && laporan.dinas_id !== auth.dinasId) {
+    // Otorisasi dinas: Petugas hanya dapat menangani laporan dinasnya sendiri (jika laporan telah ditugaskan ke dinas)
+    if (auth.role === 'petugas' && auth.dinasId && laporan.dinas_id && laporan.dinas_id !== auth.dinasId) {
       return apiError(
         'FORBIDDEN',
         'Anda tidak memiliki kewenangan mengubah status laporan di luar dinas Anda.'
