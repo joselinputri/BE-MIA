@@ -63,6 +63,11 @@ export async function GET(_req: NextRequest) {
     ]);
 
     if (total.error || selesai.error || dikerjakan.error) {
+      console.error('[dashboard/ringkasan] Query error:', {
+        totalErr: total.error,
+        selesaiErr: selesai.error,
+        dikerjakanErr: dikerjakan.error,
+      });
       return apiError('INTERNAL_ERROR', 'Gagal menghitung ringkasan dari Supabase.');
     }
 
@@ -81,7 +86,8 @@ export async function GET(_req: NextRequest) {
       sumber: [{ provenance: 'asli', nama_sumber: 'Laporan Supabase RAMPUNG', waktu_pembaruan: now.toISOString() }],
       waktu_query: now.toISOString(),
     });
-  } catch {
+  } catch (err: any) {
+    console.error('[dashboard/ringkasan] Catch error:', err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat ringkasan dashboard');
   }
 }
