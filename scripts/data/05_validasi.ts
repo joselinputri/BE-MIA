@@ -45,10 +45,11 @@ export function jalankanValidasiIntegritas(): ValidationResult[] {
   const seed016Path = path.join(currentDir, '../../supabase/migrations/016_seed_laporan_simulasi.sql');
   if (fs.existsSync(seed016Path)) {
     const content = fs.readFileSync(seed016Path, 'utf-8');
+    const contentTanpaKomentar = content.replace(/--.*$/gm, '');
 
     // Cek semua baris bertanda is_simulasi = true dan provenance = 'simulasi_terkalibrasi'
-    const barisLaporan = (content.match(/INSERT INTO public\.laporan/g) || []).length;
-    const barisSimulasi = (content.match(/'simulasi_terkalibrasi'/g) || []).length;
+    const barisLaporan = (contentTanpaKomentar.match(/INSERT INTO public\.laporan/g) || []).length;
+    const barisSimulasi = (contentTanpaKomentar.match(/'simulasi_terkalibrasi'/g) || []).length;
 
     hasil.push({
       cek: 'Provenance Tagging pada Laporan Simulasi',
