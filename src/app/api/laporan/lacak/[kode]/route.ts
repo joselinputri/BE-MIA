@@ -12,12 +12,13 @@ import { formatBanyakUrlFoto } from '@/lib/server/upload';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { kode: string } }
+  { params }: { params: Promise<{ kode: string }> }
 ) {
   try {
+    const { kode: kodeRaw } = await params;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
     // Sanitasi kode lacak: hilangkan tanda pagar '#', spasi, dan jadikan huruf kapital
-    let kode = (params.kode || '').trim().replace(/^#/, '').toUpperCase();
+    let kode = (kodeRaw || '').trim().replace(/^#/, '').toUpperCase();
 
     // 1. Rate Limiting Ketat Anti-Enumerasi (30 request/menit per IP)
     const rateCheck = periksaRateLimit(hashIP(ip), 'lacak_kode', 30, 60);
@@ -89,6 +90,7 @@ export async function GET(
       },
     });
   } catch (err: any) {
+    console.error('[lacak/kode] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat melacak laporan');
   }
 }

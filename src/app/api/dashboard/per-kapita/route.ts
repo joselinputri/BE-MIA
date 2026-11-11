@@ -29,7 +29,8 @@ export async function GET(req: NextRequest) {
     });
 
     if (error) {
-      return apiSukses([]);
+      console.error('[dashboard/per-kapita] DB error:', error.message, error.details, error.hint);
+      return apiError('INTERNAL_ERROR', 'Gagal memuat data per kapita. Pastikan migrasi fungsi dashboard sudah dijalankan.');
     }
 
     // Terapkan ambang batas minimal laporan (threshold >= 5) untuk validitas pemeringkatan
@@ -60,6 +61,7 @@ export async function GET(req: NextRequest) {
       waktu_query: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[dashboard/per-kapita] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat analitik per kapita');
   }
 }

@@ -68,20 +68,8 @@ export async function GET(req: NextRequest) {
     const { data: records, error } = await query;
 
     if (error) {
-      // Fallback mock list jika instance offline
-      return apiSukses(
-        [],
-        {
-          sumber: [
-            {
-              provenance: 'simulasi_terkalibrasi',
-              nama_sumber: 'Database RAMPUNG Surakarta',
-              waktu_pembaruan: new Date().toISOString(),
-            },
-          ],
-          waktu_query: new Date().toISOString(),
-        }
-      );
+      console.error('[laporan/publik] DB error:', error.message, error.details, error.hint);
+      return apiError('INTERNAL_ERROR', 'Gagal membaca data laporan publik dari database.');
     }
 
     let hasNextPage = false;
@@ -134,6 +122,7 @@ export async function GET(req: NextRequest) {
       waktu_query: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[laporan/publik] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat daftar laporan publik');
   }
 }

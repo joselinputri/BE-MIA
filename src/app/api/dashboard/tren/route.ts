@@ -31,24 +31,8 @@ export async function GET(req: NextRequest) {
     });
 
     if (error) {
-      // Fallback data representatif jika RPC belum ter-apply di DB remote
-      return apiSukses(
-        [
-          { bulan: '2026-08-01', jumlah_masuk: 45, jumlah_selesai: 38, jumlah_ditolak: 2, jumlah_aktif: 5, provenance_campuran: true },
-          { bulan: '2026-09-01', jumlah_masuk: 52, jumlah_selesai: 46, jumlah_ditolak: 1, jumlah_aktif: 5, provenance_campuran: true },
-          { bulan: '2026-10-01', jumlah_masuk: 57, jumlah_selesai: 49, jumlah_ditolak: 3, jumlah_aktif: 8, provenance_campuran: true },
-        ],
-        {
-          sumber: [
-            {
-              provenance: sumber === 'asli' ? 'asli' : 'simulasi_terkalibrasi',
-              nama_sumber: 'Laporan Warga & Kalibrasi ULAS Surakarta',
-              waktu_pembaruan: new Date().toISOString(),
-            },
-          ],
-          waktu_query: new Date().toISOString(),
-        }
-      );
+      console.error('[dashboard/tren] DB error:', error.message, error.details, error.hint);
+      return apiError('INTERNAL_ERROR', 'Gagal memuat tren laporan. Pastikan migrasi fungsi dashboard (fn_dashboard_tren) sudah dijalankan.');
     }
 
     return apiSukses(data || [], {
@@ -62,6 +46,7 @@ export async function GET(req: NextRequest) {
       waktu_query: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[dashboard/tren] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat tren laporan');
   }
 }

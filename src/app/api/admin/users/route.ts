@@ -27,11 +27,13 @@ export async function GET(req: NextRequest) {
       .limit(100);
 
     if (error) {
-      return apiSukses([]);
+      console.error('[admin/users] DB error:', error.message, error.details, error.hint);
+      return apiError('INTERNAL_ERROR', 'Gagal membaca daftar pengguna dari database.');
     }
 
     return apiSukses(users || []);
   } catch (err: any) {
+    console.error('[admin/users] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat daftar pengguna');
   }
 }

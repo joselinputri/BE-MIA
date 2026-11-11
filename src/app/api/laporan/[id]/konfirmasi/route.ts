@@ -11,10 +11,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const laporanId = params.id;
+    const { id: laporanId } = await params;
     const json = await req.json();
 
     const parsed = KonfirmasiInputSchema.safeParse(json);
@@ -81,6 +81,7 @@ export async function POST(
       pesan: 'Terima kasih atas konfirmasi Anda. Partisipasi Anda menjaga Surakarta tetap beres!',
     });
   } catch (err: any) {
+    console.error('[konfirmasi] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat menyimpan konfirmasi');
   }
 }

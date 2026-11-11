@@ -104,6 +104,7 @@ export async function GET(req: NextRequest) {
       waktu_query: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[dashboard/insight] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat civic insight');
   }
 }

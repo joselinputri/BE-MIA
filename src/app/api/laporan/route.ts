@@ -10,7 +10,7 @@ import { apiSukses, apiError } from '@/lib/server/response';
 import { evaluasiLaporanCerdas } from '@/lib/server/sanitizer';
 import { periksaRateLimit, hashIP } from '@/lib/server/rate-limit';
 import { dapatkanKonteksAuth } from '@/lib/server/auth';
-import { supabaseAdmin } from '@/lib/server/supabase-admin';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/server/supabase-admin';
 import { randomBytes } from 'crypto';
 
 function buatKodeLacakKriptografis(): string {
@@ -27,6 +27,14 @@ function buatKodeLacakKriptografis(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Guard: Cek apakah Supabase service role key sudah dikonfigurasi
+    if (!isSupabaseConfigured()) {
+      return apiError(
+        'SERVICE_UNAVAILABLE',
+        'Layanan penyimpanan laporan belum aktif. Administrator perlu mengisi SUPABASE_SERVICE_ROLE_KEY di .env.local.'
+      );
+    }
+
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
     const auth = await dapatkanKonteksAuth(req.headers.get('authorization') || undefined);
 
@@ -122,19 +130,8 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (errLaporan || !laporanBaru) {
-      // Jika mode offline dev tanpa koneksi Supabase, kembalikan simulasi sukses yang valid
-      return apiSukses(
-        {
-          id: 'mock-' + kodeLacak,
-          kode_lacak: kodeLacak,
-          status: 'masuk',
-          penanda: validasiKonten.penanda,
-          saran_perbaikan: validasiKonten.saranPerbaikan,
-          created_at: new Date().toISOString(),
-        },
-        undefined,
-        201
-      );
+      console.error('[laporan POST] DB insert error:', errLaporan?.message, errLaporan?.details, errLaporan?.hint);
+      return apiError('INTERNAL_ERROR', 'Gagal menyimpan laporan ke database. Periksa koneksi Supabase dan konfigurasi service role key.');
     }
 
     // 7. Simpan Kontak Pelapor (Terpisah secara ketat di tabel kontak_pelapor)

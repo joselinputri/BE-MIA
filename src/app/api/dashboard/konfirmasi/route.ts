@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
       waktu_query: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[dashboard/konfirmasi] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat data statistik konfirmasi');
   }
 }

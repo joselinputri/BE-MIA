@@ -11,10 +11,10 @@ import { formatBanyakUrlFoto, formatUrlFoto } from '@/lib/server/upload';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
 
     const { data: laporan, error } = await supabaseAdmin
       .from('laporan_publik')
@@ -40,6 +40,7 @@ export async function GET(
       linimasa: history || [],
     });
   } catch (err: any) {
+    console.error('[laporan/publik/id] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat detail laporan');
   }
 }

@@ -12,10 +12,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const laporanId = params.id;
+    const { id: laporanId } = await params;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
     const auth = await dapatkanKonteksAuth();
 
@@ -59,6 +59,7 @@ export async function POST(
       pesan: 'Dukungan Anda berhasil dicatat. Terima kasih telah berpartisipasi!',
     });
   } catch (err: any) {
+    console.error('[dukungan] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat memproses dukungan');
   }
 }

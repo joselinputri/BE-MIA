@@ -11,10 +11,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const targetUserId = params.id;
+    const { id: targetUserId } = await params;
     const auth = await dapatkanKonteksAuth();
 
     if (!auth.isAuthenticated || auth.role !== 'admin') {
@@ -77,6 +77,7 @@ export async function PATCH(
       pesan: `Role pengguna berhasil diubah menjadi "${roleBaru}"`,
     });
   } catch (err: any) {
+    console.error('[admin/role] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat memperbarui role pengguna');
   }
 }

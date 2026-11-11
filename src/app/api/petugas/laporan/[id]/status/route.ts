@@ -13,10 +13,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const laporanId = params.id;
+    const { id: laporanId } = await params;
     const auth = await dapatkanKonteksAuth();
 
     if (!auth.isAuthenticated || (auth.role !== 'petugas' && auth.role !== 'admin')) {
@@ -111,6 +111,7 @@ export async function PATCH(
       pesan: `Status laporan berhasil diperbarui menjadi "${status_ke}".`,
     });
   } catch (err: any) {
+    console.error('[petugas/status] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat memperbarui status');
   }
 }

@@ -11,10 +11,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const auth = await dapatkanKonteksAuth();
 
     if (!auth.isAuthenticated || (auth.role !== 'petugas' && auth.role !== 'admin')) {
@@ -65,6 +65,7 @@ export async function GET(
       linimasa: history || [],
     });
   } catch (err: any) {
+    console.error('[petugas/laporan/id] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memuat detail laporan petugas');
   }
 }

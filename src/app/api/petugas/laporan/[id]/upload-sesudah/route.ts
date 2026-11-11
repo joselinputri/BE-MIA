@@ -20,8 +20,9 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id: _laporanId } = await params;
   try {
     const auth = await dapatkanKonteksAuth();
     if (!auth.isAuthenticated || (auth.role !== 'petugas' && auth.role !== 'admin')) {
@@ -71,12 +72,8 @@ export async function POST(
         });
 
       if (uploadError) {
-        return apiSukses({
-          file_path: pathFile,
-          public_url: formatUrlFoto(pathFile),
-          thumbnail_url: dapatkanThumbnailUrl(pathFile),
-          is_mock: true,
-        });
+        console.error('[upload-sesudah] Storage upload error:', uploadError.message);
+        return apiError('INTERNAL_ERROR', 'Gagal mengunggah foto ke storage. Pastikan bucket laporan-foto sudah dibuat.');
       }
 
       return apiSukses({
@@ -105,13 +102,8 @@ export async function POST(
       .createSignedUploadUrl(pathFile);
 
     if (error || !data) {
-      return apiSukses({
-        upload_url: `https://mock.supabase.co/storage/v1/upload/sign/laporan-foto/${pathFile}`,
-        file_path: pathFile,
-        public_url: formatUrlFoto(pathFile),
-        thumbnail_url: dapatkanThumbnailUrl(pathFile),
-        expires_in: 300,
-      });
+      console.error('[upload-sesudah] Signed URL error:', error?.message);
+      return apiError('INTERNAL_ERROR', 'Gagal membuat URL upload bertandatangan. Pastikan Supabase Storage sudah aktif.');
     }
 
     return apiSukses({
@@ -123,6 +115,7 @@ export async function POST(
       expires_in: 300,
     });
   } catch (err: any) {
+    console.error('[upload-sesudah] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Gagal memproses unggah foto sesudah');
   }
 }

@@ -11,10 +11,10 @@ import { supabaseAdmin } from '@/lib/server/supabase-admin';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const notifId = params.id;
+    const { id: notifId } = await params;
     const auth = await dapatkanKonteksAuth();
 
     let query = supabaseAdmin
@@ -34,6 +34,7 @@ export async function PATCH(
 
     return apiSukses({ id: notifId, is_dibaca: true });
   } catch (err: any) {
+    console.error('[notifikasi/baca] Error:', err?.message || err);
     return apiError('INTERNAL_ERROR', 'Terjadi kesalahan sistem saat memperbarui notifikasi');
   }
 }
