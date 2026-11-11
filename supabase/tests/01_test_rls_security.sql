@@ -15,7 +15,7 @@ DECLARE
   v_petugas_dishub_id UUID := '44444444-aaaa-bbbb-cccc-444444444444';
   v_dpupr_id UUID := 'd1111111-0000-0000-0000-000000000001';
   v_dishub_id UUID := 'd2222222-0000-0000-0000-000000000002';
-  v_kat_aspal UUID := 'k1111111-0000-0000-0000-000000000001';
+  v_kat_aspal UUID := 'c1111111-0000-0000-0000-000000000001';
   v_laporan_id UUID;
   v_test_count INT := 0;
   v_count INT;

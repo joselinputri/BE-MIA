@@ -164,7 +164,7 @@ export function generateSeedSimulasi(targetCount: number = 200, seed: number = 2
     const fotoSebelumArr = `ARRAY['${tmpl.foto_sebelum}']`;
     const fotoSesudahArr = status === 'selesai' ? `ARRAY['${tmpl.foto_sesudah}']` : `ARRAY[]::TEXT[]`;
 
-    const laporanId = `s0000000-0000-0000-0000-${String(i).padStart(12, '0')}`;
+    const laporanId = `f0000000-0000-0000-0000-${String(i).padStart(12, '0')}`;
 
     sql += `-- Laporan ${i}\n`;
     sql += `INSERT INTO public.laporan (\n`;

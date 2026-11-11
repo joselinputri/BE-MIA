@@ -75,7 +75,7 @@ export function jalankanPengujianBackend() {
   const parseLuarSolo = BuatLaporanInputSchema.safeParse({
     judul: 'Jalan rusak parah',
     deskripsi: 'Kerusakan jalan aspal berlubang parah di tengah persimpangan jalan protokol',
-    kategori_id: 'k1111111-0000-0000-0000-000000000001',
+    kategori_id: 'c1111111-0000-0000-0000-000000000001',
     latitude: -6.175,
     longitude: 106.827,
     foto_sebelum_paths: ['sebelum/foto1.jpg'],

@@ -90,7 +90,7 @@ ON CONFLICT (singkatan) DO UPDATE SET
 INSERT INTO public.kategori (id, nama, slug, ikon, dinas_id, sla_hari, is_aktif)
 VALUES
   (
-    'k1111111-0000-0000-0000-000000000001',
+    'c1111111-0000-0000-0000-000000000001',
     'Penambalan Aspal',
     'penambalan-aspal',
     'hammer',
@@ -99,7 +99,7 @@ VALUES
     true
   ),
   (
-    'k2222222-0000-0000-0000-000000000002',
+    'c2222222-0000-0000-0000-000000000002',
     'Lampu PJU',
     'lampu-pju',
     'lightbulb',
@@ -108,7 +108,7 @@ VALUES
     true
   ),
   (
-    'k3333333-0000-0000-0000-000000000003',
+    'c3333333-0000-0000-0000-000000000003',
     'Drainase & Saluran Air',
     'drainase',
     'droplets',
@@ -117,7 +117,7 @@ VALUES
     true
   ),
   (
-    'k4444444-0000-0000-0000-000000000004',
+    'c4444444-0000-0000-0000-000000000004',
     'Sampah & Lingkungan',
     'sampah-lingkungan',
     'trash-2',
@@ -126,7 +126,7 @@ VALUES
     true
   ),
   (
-    'k5555555-0000-0000-0000-000000000005',
+    'c5555555-0000-0000-0000-000000000005',
     'Fasilitas Difabel',
     'fasilitas-difabel',
     'accessibility',
@@ -135,7 +135,7 @@ VALUES
     true
   ),
   (
-    'k6666666-0000-0000-0000-000000000006',
+    'c6666666-0000-0000-0000-000000000006',
     'Rambu & Halte',
     'rambu-halte',
     'signpost',

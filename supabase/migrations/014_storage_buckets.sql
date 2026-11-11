@@ -68,3 +68,4 @@ USING (
     AND role = 'admin'
   )
 );
+

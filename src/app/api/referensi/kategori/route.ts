@@ -16,12 +16,12 @@ export async function GET(req: NextRequest) {
       .eq('is_aktif', true);
 
     const fallback = [
-      { id: 'k1111111-0000-0000-0000-000000000001', nama: 'Penambalan Aspal', slug: 'penambalan-aspal', ikon: 'hammer', sla_hari: 7, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
-      { id: 'k2222222-0000-0000-0000-000000000002', nama: 'Lampu PJU', slug: 'lampu-pju', ikon: 'lightbulb', sla_hari: 5, dinas: { nama: 'Dinas Perhubungan', singkatan: 'Dishub' } },
-      { id: 'k3333333-0000-0000-0000-000000000003', nama: 'Drainase & Saluran Air', slug: 'drainase', ikon: 'droplets', sla_hari: 14, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
-      { id: 'k4444444-0000-0000-0000-000000000004', nama: 'Sampah & Lingkungan', slug: 'sampah-lingkungan', ikon: 'trash-2', sla_hari: 3, dinas: { nama: 'Dinas Lingkungan Hidup', singkatan: 'DLH' } },
-      { id: 'k5555555-0000-0000-0000-000000000005', nama: 'Fasilitas Difabel', slug: 'fasilitas-difabel', ikon: 'accessibility', sla_hari: 14, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
-      { id: 'k6666666-0000-0000-0000-000000000006', nama: 'Rambu & Halte', slug: 'rambu-halte', ikon: 'signpost', sla_hari: 7, dinas: { nama: 'Dinas Perhubungan', singkatan: 'Dishub' } },
+      { id: 'c1111111-0000-0000-0000-000000000001', nama: 'Penambalan Aspal', slug: 'penambalan-aspal', ikon: 'hammer', sla_hari: 7, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
+      { id: 'c2222222-0000-0000-0000-000000000002', nama: 'Lampu PJU', slug: 'lampu-pju', ikon: 'lightbulb', sla_hari: 5, dinas: { nama: 'Dinas Perhubungan', singkatan: 'Dishub' } },
+      { id: 'c3333333-0000-0000-0000-000000000003', nama: 'Drainase & Saluran Air', slug: 'drainase', ikon: 'droplets', sla_hari: 14, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
+      { id: 'c4444444-0000-0000-0000-000000000004', nama: 'Sampah & Lingkungan', slug: 'sampah-lingkungan', ikon: 'trash-2', sla_hari: 3, dinas: { nama: 'Dinas Lingkungan Hidup', singkatan: 'DLH' } },
+      { id: 'c5555555-0000-0000-0000-000000000005', nama: 'Fasilitas Difabel', slug: 'fasilitas-difabel', ikon: 'accessibility', sla_hari: 14, dinas: { nama: 'Dinas Pekerjaan Umum dan Penataan Ruang', singkatan: 'DPUPR' } },
+      { id: 'c6666666-0000-0000-0000-000000000006', nama: 'Rambu & Halte', slug: 'rambu-halte', ikon: 'signpost', sla_hari: 7, dinas: { nama: 'Dinas Perhubungan', singkatan: 'Dishub' } },
     ];
 
     return apiSukses(data && data.length > 0 ? data : fallback);
