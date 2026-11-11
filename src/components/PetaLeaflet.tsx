@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -56,9 +56,16 @@ export default function PetaLeaflet({
   statusFilter,
 }: PetaLeafletProps) {
   const [mounted, setMounted] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   if (!mounted) {
@@ -90,6 +97,7 @@ export default function PetaLeaflet({
   return (
     <div className="relative w-full h-[540px] rounded-2xl overflow-hidden border border-navy/20 shadow-inner">
       <MapContainer
+        ref={mapRef}
         center={centerPosition}
         zoom={13}
         scrollWheelZoom={false}

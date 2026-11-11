@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Disabling strict mode prevents double mounting of Leaflet canvas
   poweredByHeader: false, // Menghapus header X-Powered-By untuk keamanan
   images: {
     remotePatterns: [

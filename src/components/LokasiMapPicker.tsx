@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, Marker, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -37,6 +37,17 @@ function PosisikanPeta({ latitude, longitude }: Pick<LokasiMapPickerProps, 'lati
 }
 
 export default function LokasiMapPicker({ latitude, longitude, onChange }: LokasiMapPickerProps) {
+  const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
   const icon = useMemo(
     () =>
       L.divIcon({
@@ -51,6 +62,7 @@ export default function LokasiMapPicker({ latitude, longitude, onChange }: Lokas
   return (
     <div className="h-56 overflow-hidden rounded-2xl border border-navy/15">
       <MapContainer
+        ref={mapRef}
         center={[latitude, longitude]}
         zoom={15}
         minZoom={12}
