@@ -48,6 +48,7 @@ export default function LaporPage() {
   const [kategori, setKategori] = useState<string | null>('penambalan-aspal');
   const [judul, setJudul] = useState<string>('');
   const [foto, setFoto] = useState<string | null>(null);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoName, setFotoName] = useState<string>('');
   const [latitude, setLatitude] = useState(PUSAT_SURAKARTA[0]);
   const [longitude, setLongitude] = useState(PUSAT_SURAKARTA[1]);
@@ -68,6 +69,7 @@ export default function LaporPage() {
   function handleFoto(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setFotoFile(file);
     setFotoName(file.name);
     const url = URL.createObjectURL(file);
     setFoto(url);
@@ -117,13 +119,35 @@ export default function LaporPage() {
 
     setIsSubmitting(true);
 
+    let fotoUrlToSubmit = foto || undefined;
+
+    // Jika pengguna memilih file foto dari galeri/kamera, upload ke endpoint backend Supabase Storage
+    if (fotoFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', fotoFile);
+        const uploadRes = await fetch('/api/laporan/upload-foto', {
+          method: 'POST',
+          body: formData,
+        });
+        if (uploadRes.ok) {
+          const uploadJson = await uploadRes.json();
+          if (uploadJson.data?.public_url || uploadJson.data?.file_path) {
+            fotoUrlToSubmit = uploadJson.data.public_url || uploadJson.data.file_path;
+          }
+        }
+      } catch (err) {
+        console.warn('Upload foto lokal gagal, fallback ke default:', err);
+      }
+    }
+
     const res = await kirimLaporan({
       judul: judul.trim(),
       deskripsi: deskripsi.trim(),
       kategori_slug: kategori,
       latitude,
       longitude,
-      foto_url: foto || undefined,
+      foto_url: fotoUrlToSubmit,
       is_anonim: true,
     });
 
@@ -296,28 +320,39 @@ export default function LaporPage() {
 
             {/* ── Bottom actions ── */}
             <Reveal delay={300}>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className={cn(
-                    tombolDasar,
-                    'bg-crimson px-7 text-white shadow-lg shadow-crimson/20 hover:bg-[#8a002b] disabled:opacity-50'
-                  )}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <RotateCw className="h-4 w-4 animate-spin" />
-                      <span>Memproses Laporan...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4" fill="white" />
-                      <span>Kirim Laporan Sekarang</span>
-                    </>
-                  )}
-                </button>
+              <div className="space-y-4 pt-2">
+                {errorNotice && (
+                  <div
+                    role="alert"
+                    className="flex items-start gap-3 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-crimson shadow-sm animate-in fade-in"
+                  >
+                    <TriangleAlert className="h-4 w-4 shrink-0 text-crimson mt-0.5" />
+                    <span>{errorNotice}</span>
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className={cn(
+                      tombolDasar,
+                      'bg-crimson px-7 text-white shadow-lg shadow-crimson/20 hover:bg-[#8a002b] disabled:opacity-50'
+                    )}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RotateCw className="h-4 w-4 animate-spin" />
+                        <span>Memproses Laporan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" fill="white" />
+                        <span>Kirim Laporan Sekarang</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </Reveal>
           </div>

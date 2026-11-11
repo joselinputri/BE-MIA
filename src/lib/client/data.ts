@@ -326,16 +326,10 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
       };
     }
 
-    if (
-      !payload.foto_url ||
-      payload.foto_url.startsWith('blob:') ||
-      payload.foto_url.includes('images.unsplash.com')
-    ) {
-      return {
-        ok: false,
-        pesan: 'Unggah foto belum tersambung ke Supabase Storage. Laporan belum dikirim.',
-      };
-    }
+    const fotoFinal =
+      payload.foto_url && !payload.foto_url.startsWith('blob:')
+        ? payload.foto_url
+        : defaultPhoto;
 
     let kategoriId = payload.kategori_id;
 
@@ -371,7 +365,7 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
       kategori_id: kategoriId,
       latitude: payload.latitude || -7.5684,
       longitude: payload.longitude || 110.825,
-      foto_sebelum_paths: [defaultPhoto],
+      foto_sebelum_paths: [fotoFinal],
       is_anonim: payload.is_anonim,
       email_pelapor: payload.email_pelapor,
       telepon_pelapor: payload.telepon_pelapor,
