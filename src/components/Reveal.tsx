@@ -1,48 +1,18 @@
-/**
- * src/components/Reveal.tsx
- * Komponen animasi fade-in + slide-up saat elemen masuk viewport.
- * Platform RAMPUNG — Pelaporan Aduan Warga Kota Surakarta
- */
-
 'use client';
-
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
-interface RevealProps {
-  children: ReactNode;
-  delay?: number;
-  className?: string;
-}
-
-export default function Reveal({ children, delay = 0, className = '' }: RevealProps) {
+export default function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
+  const [tampil, setTampil] = useState(false);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => setVisible(true), delay);
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [delay]);
-
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !ref.current) { setTampil(true); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setTampil(true); io.disconnect(); } }, { threshold: 0.1 });
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, []);
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
-      } ${className}`}
-    >
+    <div ref={ref} style={{ transitionDelay: `${delay}ms` }} className={cn('reveal', tampil && 'in', className)}>
       {children}
     </div>
   );

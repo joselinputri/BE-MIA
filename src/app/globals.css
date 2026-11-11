@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Variabel dasar ── */
+:root { --fs: 1; }
+html { font-size: calc(16px * var(--fs)); scroll-behavior: smooth; }
+body { font-family: 'Montserrat Variable', system-ui, sans-serif; background: linear-gradient(180deg, #28264b 0%, #4E5174 100%); color: #E8EAE7; }
+
+/* ── Gradien palet Figma ── */
+.bg-nav { background: linear-gradient(100deg, #E8EAE7 0%, #E8EAE7 12%, #6D729A 38%, #4E5174 100%); }
+.bg-foot { background: linear-gradient(180deg, #E8EAE7 0%, #959EC9 100%); }
+.bg-night { background: linear-gradient(180deg, #28264b 0%, #4E5174 100%); }
+.bg-hero { background: #BEBDCC; }
+.bg-cta { background: linear-gradient(90deg, #28264b 0%, #A40033 100%); }
+.bg-dark-card { background: linear-gradient(135deg, #28264b 0%, #A40033 160%); }
+.bg-slate-card { background: linear-gradient(180deg, #28264b 0%, #4E5174 100%); }
+
+/* ── Reveal: komponen muncul dari bawah ── */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1); }
+.reveal.in { opacity: 1; transform: none; }
+
+/* ── Bar tumbuh horizontal ── */
+.bar-grow { transform-origin: left; animation: grow .9s ease both; }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ── Focus ring ── */
+:focus-visible { outline: 3px solid #A40033; outline-offset: 2px; }
+.night :focus-visible, .bg-night :focus-visible { outline-color: #fff; }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* ── High contrast ── */
+html.hc body { background: #fff; color: #000; }
+html.hc .bg-nav, html.hc .bg-foot, html.hc .bg-night { background: #fff; }
+html.hc .bg-hero, html.hc .bg-panel, html.hc .bg-card, html.hc .bg-lilac { background: #fff !important; border: 2px solid #000; }
+html.hc .nav-link, html.hc .bg-nav * { color: #000 !important; }
+html.hc .bg-night { color: #000; }
+html.hc .text-peri, html.hc .text-slate, html.hc [class*="text-navy/"] { color: #000 !important; }
+html.hc .bg-cta, html.hc .bg-dark-card, html.hc .bg-slate-card { background: #000 !important; color: #fff; }
+html.hc a { text-decoration: underline; }
+
+/* ── Leaflet ── */
+.leaflet-container { position: relative; z-index: 0; isolation: isolate; background: #12102b; font-family: inherit; }
+.tile-gelap .leaflet-tile-pane { filter: invert(1) hue-rotate(200deg) brightness(.7) contrast(.9) saturate(.6); }
+html.hc .tile-gelap .leaflet-tile-pane { filter: none; }
+.rampung-location-marker span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: #A40033;
+  box-shadow: 0 2px 8px rgb(40 38 75 / 40%);
+  transform: rotate(-45deg);
+}
+
+/* ── Print ── */
+@media print { .no-print { display: none !important; } body { background: #fff; } }
+
+/* ── Gear spin ── */
+@keyframes gear-spin { to { transform: rotate(360deg); } }
+@keyframes gear-spin-reverse { to { transform: rotate(-360deg); } }
+.gear-spin { animation: gear-spin 8s linear infinite; }
+.gear-spin-reverse { animation: gear-spin-reverse 6s linear infinite; }
