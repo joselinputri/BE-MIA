@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import dynamic from 'next/dynamic';
+import Script from 'next/script';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -28,6 +29,24 @@ import { cn } from '@/lib/utils';
 const DESC_MAX = 500;
 const DESC_MIN = 20;
 const PUSAT_SURAKARTA: [number, number] = [-7.5684, 110.8122];
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          'expired-callback': () => void;
+          'error-callback': () => void;
+        }
+      ) => string;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
 
 const LokasiMapPicker = dynamic(() => import('@/components/LokasiMapPicker'), {
   ssr: false,
@@ -56,6 +75,8 @@ export default function LaporPage() {
   const [deskripsi, setDeskripsi] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [suksesModal, setSuksesModal] = useState<{
     kode: string;
     pesan: string;
@@ -65,6 +86,8 @@ export default function LaporPage() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!foto?.startsWith('blob:')) return;
@@ -78,6 +101,30 @@ export default function LaporPage() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [errorNotice]);
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY || !turnstileReady || !turnstileContainerRef.current || !window.turnstile) return;
+
+    turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: (token) => setTurnstileToken(token),
+      'expired-callback': () => {
+        setTurnstileToken(null);
+        setErrorNotice('Verifikasi keamanan kedaluwarsa. Selesaikan verifikasi kembali.');
+      },
+      'error-callback': () => {
+        setTurnstileToken(null);
+        setErrorNotice('Verifikasi keamanan gagal dimuat. Coba muat ulang halaman.');
+      },
+    });
+
+    return () => {
+      if (turnstileWidgetIdRef.current) {
+        window.turnstile?.remove(turnstileWidgetIdRef.current);
+        turnstileWidgetIdRef.current = null;
+      }
+    };
+  }, [turnstileReady]);
 
   /* ── handlers ── */
   function handleFoto(e: ChangeEvent<HTMLInputElement>) {
@@ -145,6 +192,10 @@ export default function LaporPage() {
       setErrorNotice('Unggah foto bukti kondisi sebelum perbaikan terlebih dahulu.');
       return;
     }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setErrorNotice('Selesaikan verifikasi keamanan sebelum mengirim laporan.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -157,6 +208,7 @@ export default function LaporPage() {
       foto_url: foto || undefined,
       foto_file: fotoFile,
       is_anonim: true,
+      turnstile_token: turnstileToken || undefined,
     });
 
     setIsSubmitting(false);
@@ -316,6 +368,20 @@ export default function LaporPage() {
                 <p className="text-xs text-navy/70">
                   Laporan dikirim tanpa menampilkan identitas pribadi pada halaman publik.
                 </p>
+                {TURNSTILE_SITE_KEY && (
+                  <>
+                    <Script
+                      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                      strategy="afterInteractive"
+                      onReady={() => setTurnstileReady(true)}
+                      onError={() => setErrorNotice('Skrip verifikasi keamanan gagal dimuat. Coba muat ulang halaman.')}
+                    />
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-navy">Verifikasi keamanan</p>
+                      <div ref={turnstileContainerRef} />
+                    </div>
+                  </>
+                )}
               </div>
             </Reveal>
 

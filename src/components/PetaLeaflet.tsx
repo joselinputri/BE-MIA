@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
+import { useEffect, useMemo } from 'react';
+import type { Map as LeafletMap } from 'leaflet';
+import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Laporan } from '@/lib/client/data';
 import { statusDari } from '@/lib/status';
 import Link from 'next/link';
-import { MapPin, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface PetaLeafletProps {
   laporan: Laporan[];
@@ -16,6 +18,60 @@ interface PetaLeafletProps {
   kategoriFilter?: string;
   kecamatanFilter?: string;
   statusFilter?: string;
+}
+
+const PUSAT_KECAMATAN: Record<string, [number, number]> = {
+  banjarsari: [-7.541, 110.824],
+  jebres: [-7.55, 110.85],
+  laweyan: [-7.568, 110.795],
+  'pasar kliwon': [-7.581, 110.831],
+  serengan: [-7.578, 110.813],
+};
+
+function SesuaikanViewport({
+  laporan,
+  kecamatanFilter,
+}: {
+  laporan: Laporan[];
+  kecamatanFilter: string;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (kecamatanFilter !== 'semua' && PUSAT_KECAMATAN[kecamatanFilter.toLowerCase()]) {
+      const titikKecamatan = laporan.filter(
+        (item) => item.kecamatan?.toLowerCase() === kecamatanFilter.toLowerCase()
+      );
+
+      if (titikKecamatan.length > 0) {
+        geserKeTitik(map, titikKecamatan);
+      } else {
+        map.flyTo(PUSAT_KECAMATAN[kecamatanFilter.toLowerCase()], 14, { duration: 0.8 });
+      }
+      return;
+    }
+
+    if (laporan.length > 0) {
+      geserKeTitik(map, laporan);
+      return;
+    }
+
+    map.flyTo([-7.5684, 110.825], 13, { duration: 0.8 });
+  }, [kecamatanFilter, laporan, map]);
+
+  return null;
+}
+
+function geserKeTitik(map: LeafletMap, laporan: Laporan[]) {
+  const bounds = L.latLngBounds(laporan.map((item) => [item.latitude, item.longitude]));
+  if (!bounds.isValid()) return;
+
+  if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+    map.flyTo(bounds.getCenter(), 15, { duration: 0.8 });
+    return;
+  }
+
+  map.flyToBounds(bounds, { padding: [40, 40], maxZoom: 15, duration: 0.8 });
 }
 
 // Marker icon generator berbasis SVG murni
@@ -55,41 +111,27 @@ export default function PetaLeaflet({
   kecamatanFilter,
   statusFilter,
 }: PetaLeafletProps) {
-  const [mounted, setMounted] = useState(false);
-  const mapRef = useRef<L.Map | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="w-full h-[520px] bg-slate-900/90 rounded-2xl flex flex-col items-center justify-center text-white/60">
-        <MapPin className="w-10 h-10 animate-bounce text-crimson mb-2" />
-        <p className="text-sm font-semibold">Menyiapkan peta geospasial Surakarta...</p>
-      </div>
-    );
-  }
-
   // Filter titik laporan
-  const filtered = laporan.filter((item) => {
-    if (kategoriFilter && kategoriFilter !== 'semua' && item.kategori_slug !== kategoriFilter) {
-      return false;
-    }
-    if (kecamatanFilter && kecamatanFilter !== 'semua' && item.kecamatan?.toLowerCase() !== kecamatanFilter.toLowerCase()) {
-      return false;
-    }
-    if (statusFilter && statusFilter !== 'semua' && item.status !== statusFilter) {
-      return false;
-    }
-    return true;
-  });
+  const filtered = useMemo(
+    () =>
+      laporan.filter((item) => {
+        if (kategoriFilter && kategoriFilter !== 'semua' && item.kategori_slug !== kategoriFilter) {
+          return false;
+        }
+        if (
+          kecamatanFilter &&
+          kecamatanFilter !== 'semua' &&
+          item.kecamatan?.toLowerCase() !== kecamatanFilter.toLowerCase()
+        ) {
+          return false;
+        }
+        if (statusFilter && statusFilter !== 'semua' && item.status !== statusFilter) {
+          return false;
+        }
+        return true;
+      }),
+    [kategoriFilter, kecamatanFilter, laporan, statusFilter]
+  );
 
   // Titik pusat Kota Surakarta (Balai Kota / Gladag)
   const centerPosition: [number, number] = [-7.5684, 110.825];
@@ -97,7 +139,6 @@ export default function PetaLeaflet({
   return (
     <div className="relative w-full h-[540px] rounded-2xl overflow-hidden border border-navy/20 shadow-inner">
       <MapContainer
-        ref={mapRef}
         center={centerPosition}
         zoom={13}
         scrollWheelZoom={false}
@@ -110,6 +151,7 @@ export default function PetaLeaflet({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <SesuaikanViewport laporan={filtered} kecamatanFilter={kecamatanFilter || 'semua'} />
 
         {filtered.map((item) => {
           const isSelected = selectedId === item.id;
