@@ -71,7 +71,7 @@ export default function Beranda() {
     const cocokKategori = filterKategori === 'semua' || laporan.kategori_slug === filterKategori;
     return cocokKecamatan && cocokStatus && cocokKategori;
   }), [filterKec, filterKategori, filterStatus, laporanList]);
-  const firstLaporan = laporanList?.[0];
+  const firstLaporan = laporanList?.find((l) => l.foto_sebelum_paths?.length) || laporanList?.[0];
   const laporanTerkini = laporanTersaring
     .slice(0, 3);
   const trenTerbaru = dash?.tren.slice(-4) || [];
@@ -419,7 +419,7 @@ export default function Beranda() {
                 <div>
                   <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-navy/70">Sebelum Perbaikan</span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {firstLaporan.foto_sebelum_paths[0] && (
+                    {firstLaporan.foto_sebelum_paths?.[0] ? (
                       <Image
                         src={firstLaporan.foto_sebelum_paths[0]}
                         alt="Kondisi sebelum perbaikan"
@@ -427,6 +427,10 @@ export default function Beranda() {
                         className="object-cover"
                         sizes="(max-width:640px) 100vw, 50vw"
                       />
+                    ) : (
+                      <span className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-navy/70">
+                        Foto sebelum perbaikan belum tersedia.
+                      </span>
                     )}
                   </div>
                 </div>
@@ -437,7 +441,7 @@ export default function Beranda() {
                     {firstLaporan.status === 'selesai' ? 'Sesudah (Tuntas)' : 'Foto Pembaruan'}
                   </span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {firstLaporan.foto_sesudah_paths[0] && (
+                    {firstLaporan.foto_sesudah_paths?.[0] ? (
                       <Image
                         src={firstLaporan.foto_sesudah_paths[0]}
                         alt="Kondisi sesudah perbaikan"
@@ -445,8 +449,7 @@ export default function Beranda() {
                         className="object-cover"
                         sizes="(max-width:640px) 100vw, 50vw"
                       />
-                    )}
-                    {!firstLaporan.foto_sesudah_paths[0] && (
+                    ) : (
                       <span className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-navy/70">
                         Belum ada foto pembaruan yang tercatat.
                       </span>
