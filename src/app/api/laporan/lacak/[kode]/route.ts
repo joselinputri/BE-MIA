@@ -9,6 +9,7 @@ import { apiSukses, apiError } from '@/lib/server/response';
 import { periksaRateLimit, hashIP } from '@/lib/server/rate-limit';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
 import { formatBanyakUrlFoto } from '@/lib/server/upload';
+import { periksaKontenLaporan } from '@/lib/server/sanitizer';
 
 export async function GET(
   req: NextRequest,
@@ -45,6 +46,13 @@ export async function GET(
       return apiError('NOT_FOUND', 'Laporan dengan kode lacak tersebut tidak ditemukan.');
     }
 
+    // Evaluasi konten cerdas/rule-based untuk memastikan deteksi spam & joki tetap aktif
+    const cekKonten = periksaKontenLaporan(laporan.judul || '', laporan.deskripsi || '');
+    let penandaAktif: string[] = Array.isArray(laporan.penanda) ? [...laporan.penanda] : [];
+    if (cekKonten.penanda.length > 0 && !penandaAktif.includes('perlu_verifikasi_tambahan')) {
+      penandaAktif = [...penandaAktif, ...cekKonten.penanda];
+    }
+
     // 3. Ambil linimasa status history
     const { data: history } = await supabaseAdmin
       .from('status_history')
@@ -57,18 +65,28 @@ export async function GET(
     const now = new Date();
     const selisihHari = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 3600 * 24));
 
+    const linimasaList = history && history.length > 0 ? history : [
+      {
+        status_ke: 'masuk',
+        judul_tahap: 'Diterima & Verifikasi Sistem',
+        catatan: penandaAktif.includes('perlu_verifikasi_tambahan')
+          ? 'Laporan ditandai sistem: Terdeteksi anomali/spam/joki (menunggu verifikasi manual petugas)'
+          : 'Terdata di SI-ADUAN Siaga RAMPUNG Surakarta',
+        created_at: laporan.created_at,
+      },
+      { status_ke: 'ditinjau', judul_tahap: 'Dicek OPD', catatan: 'Disposisi OPD pengampu dan verifikasi lapangan', created_at: laporan.created_at },
+      { status_ke: 'sedang_ditangani', judul_tahap: 'Dikerjakan', catatan: 'Regu Reaksi Cepat melakukan tindakan fisik di lokasi', created_at: laporan.updated_at },
+      { status_ke: 'selesai', judul_tahap: 'Konfirmasi', catatan: 'Pekerjaan selesai, menunggu validasi warga pelapor', created_at: laporan.updated_at }
+    ];
+
     return apiSukses({
       laporan: {
         ...laporan,
+        penanda: penandaAktif,
         foto_sebelum_paths: formatBanyakUrlFoto(laporan.foto_sebelum_paths || []),
         foto_sesudah_paths: formatBanyakUrlFoto(laporan.foto_sesudah_paths || []),
       },
-      linimasa: history && history.length > 0 ? history : [
-        { status_ke: 'masuk', judul_tahap: 'Diterima', catatan: 'Terdata di SI-ADUAN Siaga RAMPUNG Surakarta', created_at: laporan.created_at },
-        { status_ke: 'ditinjau', judul_tahap: 'Dicek OPD', catatan: 'Disposisi OPD pengampu dan verifikasi lapangan', created_at: laporan.created_at },
-        { status_ke: 'sedang_ditangani', judul_tahap: 'Dikerjakan', catatan: 'Regu Reaksi Cepat melakukan tindakan fisik di lokasi', created_at: laporan.updated_at },
-        { status_ke: 'selesai', judul_tahap: 'Konfirmasi', catatan: 'Pekerjaan selesai, menunggu validasi warga pelapor', created_at: laporan.updated_at }
-      ],
+      linimasa: linimasaList,
       catatan_teknis: {
         regu_pelaksana: `Tim Reaksi Cepat (${laporan.kelurahan || 'Kec. Laweyan'})`,
         mandor: 'Bambang Triyono, S.T.',

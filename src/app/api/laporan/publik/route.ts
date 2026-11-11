@@ -9,6 +9,7 @@ import { LaporanPublikFilterSchema } from '@/lib/contracts/laporan';
 import { apiSukses, apiError } from '@/lib/server/response';
 import { supabaseAdmin } from '@/lib/server/supabase-admin';
 import { formatBanyakUrlFoto, dapatkanThumbnailUrl } from '@/lib/server/upload';
+import { periksaKontenLaporan } from '@/lib/server/sanitizer';
 
 export async function GET(req: NextRequest) {
   try {
@@ -87,6 +88,13 @@ export async function GET(req: NextRequest) {
       const fotoSesudahUrls = formatBanyakUrlFoto(item.foto_sesudah_paths || []);
       const thumbUrl = fotoSebelumUrls.length > 0 ? dapatkanThumbnailUrl(item.foto_sebelum_paths[0]) : null;
 
+      // Evaluasi penanda spam/joki secara retroaktif
+      const cekKonten = periksaKontenLaporan(item.judul || '', item.deskripsi || '');
+      let penandaAktif: string[] = Array.isArray(item.penanda) ? [...item.penanda] : [];
+      if (cekKonten.penanda.length > 0 && !penandaAktif.includes('perlu_verifikasi_tambahan')) {
+        penandaAktif = [...penandaAktif, ...cekKonten.penanda];
+      }
+
       if (fields === 'ringkas') {
         return {
           id: item.id,
@@ -95,6 +103,7 @@ export async function GET(req: NextRequest) {
           kategori: item.kategori,
           kelurahan: item.kelurahan,
           status: item.status,
+          penanda: penandaAktif,
           thumbnail: thumbUrl,
           jumlah_dukungan: item.jumlah_dukungan,
           created_at: item.created_at,
@@ -104,6 +113,7 @@ export async function GET(req: NextRequest) {
       }
       return {
         ...item,
+        penanda: penandaAktif,
         foto_sebelum_paths: fotoSebelumUrls,
         foto_sesudah_paths: fotoSesudahUrls,
         thumbnail: thumbUrl,

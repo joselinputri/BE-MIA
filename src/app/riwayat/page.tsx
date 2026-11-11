@@ -32,6 +32,13 @@ import {
 import { useAsync } from '@/lib/client/hooks';
 import { cn } from '@/lib/utils';
 
+export function cekIndikasiSpam(laporan?: Laporan | null): boolean {
+  if (!laporan) return false;
+  if (laporan.penanda?.includes('perlu_verifikasi_tambahan')) return true;
+  const gabung = `${laporan.judul || ''} ${laporan.deskripsi || ''}`.toLowerCase();
+  return /joki|slot|gacor|pinjol|dana cair|jasa tugas|open joki|followers|top up|topup|dm ig|wa\.me/i.test(gabung);
+}
+
 function RiwayatContent() {
   const searchParams = useSearchParams();
   const initialKode = searchParams.get('kode') || 'RMP-2025-088';
@@ -321,9 +328,16 @@ function RiwayatContent() {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-mono font-bold text-navy">#{laporan.kode_lacak}</span>
-                      <span className="text-[10px] font-extrabold bg-slate text-white px-2 py-0.5 rounded">
-                        {laporan.status.replace(/_/g, ' ')}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {cekIndikasiSpam(laporan) && (
+                          <span className="text-[9px] font-extrabold bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded border border-rose-300">
+                            Perlu Verifikasi
+                          </span>
+                        )}
+                        <span className="text-[10px] font-extrabold bg-slate text-white px-2 py-0.5 rounded">
+                          {laporan.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
                     </div>
                     <h3 className="text-xs font-extrabold text-navy leading-snug line-clamp-1">{laporan.judul}</h3>
                     <p className="text-[11px] text-navy/70 mt-1 flex items-center gap-1">
@@ -398,6 +412,12 @@ function RiwayatContent() {
                         ? `Status: ${currentLap.status.replace(/_/g, ' ')}`
                         : 'Status belum tersedia'}
                     </span>
+                    {cekIndikasiSpam(currentLap) && (
+                      <span className="text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 px-2.5 py-1 rounded-md flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                        Perlu Verifikasi (Indikasi Spam)
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -416,6 +436,18 @@ function RiwayatContent() {
                 <p className="text-xs sm:text-sm text-navy/80 leading-relaxed font-medium">
                   {currentLap?.deskripsi || 'Periksa kembali kode lacak atau coba lagi setelah data berhasil dimuat.'}
                 </p>
+
+                {cekIndikasiSpam(currentLap) && (
+                  <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs font-medium text-rose-900 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-rose-950">Laporan Ditandai oleh Sistem Keamanan AI</p>
+                      <p className="mt-0.5 text-rose-800 leading-relaxed">
+                        Laporan ini terdeteksi bukan aduan fasilitas publik (indikasi spam/komersial/joki) dan diberi penanda <strong>perlu_verifikasi_tambahan</strong> untuk ditinjau manual oleh Petugas sebelum didisposisikan.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ── Linimasa status laporan ── */}

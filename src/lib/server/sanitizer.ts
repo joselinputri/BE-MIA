@@ -13,7 +13,7 @@
 
 export type PenandaLaporan = 'perlu_verifikasi_tambahan';
 
-// Daftar kata kunci terlarang (spam, promosi komersial, judi, pinjol)
+// Daftar kata kunci terlarang (spam, promosi komersial, judi, pinjol, joki)
 const KATA_KUNCI_SPAM: string[] = [
   'slot',
   'gacor',
@@ -26,6 +26,15 @@ const KATA_KUNCI_SPAM: string[] = [
   'tanpa jaminan',
   'bunga rendah',
   'promo diskon',
+  'joki',
+  'open joki',
+  'jasa joki',
+  'jasa tugas',
+  'jual beli',
+  'followers',
+  'top up',
+  'topup',
+  'dm ig',
   'wa.me/',
   'bit.ly/',
   't.me/',
@@ -115,15 +124,15 @@ export async function evaluasiLaporanCerdas(
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // Batas 2.5 detik agar respon tetap cepat
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const promptText = `Anda adalah asisten AI resmi verifikasi kelayakan laporan aduan warga Kota Surakarta (Platform RAMPUNG).
 Tugas Anda:
-1. Evaluasi apakah laporan ini nyata, wajar, dan bukan hoax/lelucon/prank/ujaran kebencian.
+1. Evaluasi apakah laporan ini relevan dengan masalah fasilitas/infrastruktur/layanan publik kota, atau merupakan spam/iklan/jasa joki/promosi komersial/hoax.
 2. Tentukan tingkat urgensi (rendah/sedang/tinggi).
-3. Berikan skor kelayakan (0 sampai 100).
-4. Berikan saran singkat dan ramah jika pelapor perlu melengkapi detail lokasi/kondisi.
-5. Jika ada indikasi anomali/palsu, beri tahu alasannya.
+3. Berikan skor kelayakan fasilitas publik (0 sampai 100). Jika spam/joki/iklan, skor HARUS di bawah 30.
+4. Berikan saran singkat jika pelapor perlu melengkapi detail lokasi/kondisi.
+5. Jika ada indikasi anomali/spam/joki, set "indikasi_anomali": true dan sebutkan alasannya.
 
 Data Laporan:
 - Kategori: ${kategoriNama}
@@ -141,14 +150,14 @@ Format respons WAJIB berupa JSON murni tanpa markdown/backticks:
 }`;
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
           generationConfig: {
-            temperature: 0.2,
+            temperature: 0.1,
             maxOutputTokens: 256,
             responseMimeType: 'application/json',
           },
@@ -160,6 +169,8 @@ Format respons WAJIB berupa JSON murni tanpa markdown/backticks:
     clearTimeout(timeoutId);
 
     if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      console.warn('[Gemini AI] API error:', res.status, errBody);
       return hasilDasar;
     }
 
