@@ -14,15 +14,15 @@ import { supabaseAdmin, isSupabaseConfigured } from '@/lib/server/supabase-admin
 import { randomBytes } from 'crypto';
 
 function buatKodeLacakKriptografis(): string {
-  const tahun = new Date().getFullYear();
+  const tahun2Digit = String(new Date().getFullYear()).slice(-2);
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const bytes = randomBytes(4);
   let randomPart = '';
   for (let i = 0; i < 4; i++) {
     randomPart += chars[bytes[i] % chars.length];
   }
-  // Format sesuai UI/UX RAMPUNG: RMP-2026-XXXX (misal: RMP-2026-A7X9)
-  return `RMP-${tahun}-${randomPart}`;
+  // Format: RMP-26-XXXX (11 karakter, sesuai batas VARCHAR(12) di tabel laporan)
+  return `RMP-${tahun2Digit}-${randomPart}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     if (errLaporan || !laporanBaru) {
       console.error('[laporan POST] DB insert error:', errLaporan?.message, errLaporan?.details, errLaporan?.hint);
-      return apiError('INTERNAL_ERROR', 'Gagal menyimpan laporan ke database. Periksa koneksi Supabase dan konfigurasi service role key.');
+      return apiError('INTERNAL_ERROR', `Gagal menyimpan laporan: ${errLaporan?.message || 'Database insert gagal'}`);
     }
 
     // 7. Simpan Kontak Pelapor (Terpisah secara ketat di tabel kontak_pelapor)
