@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { apiError, apiSukses } from '@/lib/server/response';
 import { getSupabaseServerClient } from '@/lib/server/supabase-server';
 import { isSupabaseConfigured, supabaseAdmin } from '@/lib/server/supabase-admin';
+import { tentukanPeranDariEmail } from '@/lib/server/peran-khusus';
 
 const UpdateProfileSchema = z.object({
   nama: z.string().trim().min(2).max(100),
@@ -46,11 +47,23 @@ export async function GET() {
   try {
     const result = await getProfile();
     if ('error' in result) return result.error;
+
+    // Sinkronkan peran jika email terdaftar di whitelist/kode unik admin atau petugas
+    const peranKhusus = tentukanPeranDariEmail(result.user.email);
+    let roleTampil = result.profile.role;
+    if (peranKhusus !== 'warga' && roleTampil !== peranKhusus) {
+      roleTampil = peranKhusus;
+      void supabaseAdmin
+        .from('profiles')
+        .update({ role: peranKhusus, updated_at: new Date().toISOString() })
+        .eq('id', result.user.id);
+    }
+
     return apiSukses({
       id: result.profile.id,
       email: result.user.email || '',
       nama: result.profile.nama || '',
-      role: result.profile.role,
+      role: roleTampil,
       no_telepon: result.profile.no_telepon || '',
       created_at: result.profile.created_at,
     });

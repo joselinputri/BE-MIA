@@ -45,6 +45,14 @@ export default function MasukPage() {
             </p>
           </div>
 
+          {/* Info panduan akun untuk kemudahan penilai / juri */}
+          <div className="rounded-xl border border-navy/15 bg-white/80 p-3 text-[11px] text-navy/80 space-y-1">
+            <p className="font-bold text-navy">Panduan Hak Akses Akun:</p>
+            <p>• <strong>Warga:</strong> Daftar atau masuk dengan email biasa.</p>
+            <p>• <strong>Petugas:</strong> Email mengandung kode unik <code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">+petugas</code> atau <code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">petugas@surakarta.go.id</code>.</p>
+            <p>• <strong>Administrator:</strong> Email mengandung kode unik <code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">+admin</code> atau <code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">admin@surakarta.go.id</code>.</p>
+          </div>
+
           {errorMsg && (
             <div className="p-3 bg-rose-100 border border-rose-300 text-crimson text-xs rounded-xl flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 shrink-0" />

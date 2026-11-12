@@ -7,6 +7,7 @@
 import { getSupabaseServerClient } from './supabase-server';
 import { supabaseAdmin } from './supabase-admin';
 import { UserRole } from './state-machine';
+import { tentukanPeranDariEmail } from './peran-khusus';
 
 export interface AuthContext {
   userId: string | null;
@@ -40,9 +41,22 @@ export async function dapatkanKonteksAuth(authHeader?: string): Promise<AuthCont
       .eq('id', user.id)
       .single();
 
+    // Verifikasi peran khusus jika email cocok dengan whitelist / kode unik juri
+    const peranKhusus = tentukanPeranDariEmail(user.email);
+    let roleDefinitif: UserRole = (profile?.role as UserRole) || 'warga';
+
+    if (peranKhusus !== 'warga' && roleDefinitif !== peranKhusus) {
+      roleDefinitif = peranKhusus;
+      // Sinkronkan ke database profiles agar konsisten
+      void supabaseAdmin
+        .from('profiles')
+        .update({ role: peranKhusus, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
     return {
       userId: user.id,
-      role: (profile?.role as UserRole) || 'warga',
+      role: roleDefinitif,
       dinasId: profile?.dinas_id || null,
       isAuthenticated: true,
     };

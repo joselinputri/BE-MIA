@@ -774,7 +774,7 @@ function RiwayatContent() {
                 </div>
               )}
 
-              {/* Banner Panduan jika pengguna belum dalam peran Petugas */}
+              {/* Informasi Alur Petugas Lapangan */}
               {!isPetugasOrAdmin && currentLap && currentLap.status !== 'selesai' && (
                 <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
@@ -783,21 +783,13 @@ function RiwayatContent() {
                     </div>
                     <div>
                       <p className="text-xs font-extrabold text-navy">
-                        Ingin mencoba alur Petugas Lapangan (Upload Foto Sesudah)?
+                        Penanganan Sedang Berjalan
                       </p>
                       <p className="text-[11px] text-navy/70">
-                        {pengguna
-                          ? 'Ubah peran Anda menjadi "Petugas (DPUPR)" melalui halaman Profil untuk membuka formulir penyelesaian tiket ini.'
-                          : 'Silakan Masuk / Daftar akun terlebih dahulu, lalu pilih peran "Petugas (DPUPR)" di halaman Profil.'}
+                        Petugas lapangan berwenang yang ditugaskan akan mengunggah foto bukti sesudah perbaikan dan catatan teknis.
                       </p>
                     </div>
                   </div>
-                  <Link
-                    href={pengguna ? '/profil' : '/masuk'}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy/90 transition shadow-sm"
-                  >
-                    {pengguna ? 'Buka Profil & Ganti Peran' : 'Masuk Sekarang'}
-                  </Link>
                 </div>
               )}
 
@@ -820,90 +812,107 @@ function RiwayatContent() {
                 )}
               </div>
 
-              {/* ── Kuesioner Audit Gotong Royong ── */}
-              <div className="bg-white p-5 rounded-2xl border-2 border-crimson/20 shadow-sm space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-crimson/10 text-crimson rounded-xl shrink-0 mt-0.5">
-                    <AlertCircle className="w-5 h-5" />
+              {/* ── Kuesioner Audit Gotong Royong (Khusus Warga Pelapor saat status Selesai) ── */}
+              {currentLap?.status === 'selesai' && !isPetugasOrAdmin && (
+                <div className="bg-white p-5 rounded-2xl border-2 border-crimson/20 shadow-sm space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-crimson/10 text-crimson rounded-xl shrink-0 mt-0.5">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-navy">
+                        Apakah laporan ini sudah benar-benar beres?
+                      </h3>
+                      <p className="text-xs text-navy/70 mt-0.5 leading-relaxed">
+                        Sebagai warga pelapor, Anda berhak memverifikasi langsung hasil pengerjaan di lapangan.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-extrabold text-navy">
-                      Apakah laporan ini sudah benar-benar beres?
-                    </h3>
-                    <p className="text-xs text-navy/70 mt-0.5 leading-relaxed">
-                      Konfirmasi hanya dapat dikirim setelah laporan berstatus selesai.
-                    </p>
+
+                  {konfirmasiStatus === 'idle' ? (
+                    <div className="space-y-4 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-navy">Beri Penilaian Layanan:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setRating(star)}
+                              className="p-1 hover:scale-110 transition-transform"
+                            >
+                              <Star
+                                className={cn(
+                                  'w-5 h-5',
+                                  star <= rating ? 'fill-amber-400 text-amber-400' : 'text-navy/20'
+                                )}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                        <span className="text-xs font-semibold text-navy/60 ml-1">
+                          ({rating}/5 {rating >= 4 ? 'Sangat Puas' : 'Cukup'})
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleKonfirmasi('selesai')}
+                          className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                        >
+                          <Check className="w-4 h-4" />
+                          Sudah Beres / Selesai Tuntas
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleKonfirmasi('revisi')}
+                          className="flex-1 py-3 bg-white hover:bg-rose-50 text-crimson border-2 border-crimson/40 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Belum Sesuai / Butuh Tindak Lanjut
+                        </button>
+                      </div>
+                    </div>
+                  ) : konfirmasiStatus === 'selesai' ? (
+                    <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-center space-y-1 animate-in fade-in">
+                      <p className="text-xs font-extrabold text-emerald-800">
+                        Konfirmasi hasil berhasil disimpan.
+                      </p>
+                      <p className="text-[11px] text-emerald-700">
+                        Terima kasih telah memberikan penilaian terhadap penanganan fasilitas publik.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-center space-y-1 animate-in fade-in">
+                      <p className="text-xs font-extrabold text-crimson">
+                        Permintaan tindak lanjut berhasil dikirim ke petugas.
+                      </p>
+                      <p className="text-[11px] text-navy/70">
+                        Status aduan diubah menjadi dibuka kembali agar petugas melakukan pengerjaan ulang.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tampilan Konfirmasi yang Sudah Diberikan (Read-only untuk Publik / Petugas / Admin) */}
+              {currentLap?.status === 'selesai' && isPetugasOrAdmin && (
+                <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-emerald-950">
+                        Penanganan Telah Selesai
+                      </p>
+                      <p className="text-[11px] text-emerald-800">
+                        Penilaian kualitas layanan fasilitas publik dievaluasi langsung oleh warga pelapor.
+                      </p>
+                    </div>
                   </div>
                 </div>
-
-                {konfirmasiStatus === 'idle' ? (
-                  <div className="space-y-4 pt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-navy">Beri Penilaian Layanan:</span>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setRating(star)}
-                            className="p-1 hover:scale-110 transition-transform"
-                          >
-                            <Star
-                              className={cn(
-                                'w-5 h-5',
-                                star <= rating ? 'fill-amber-400 text-amber-400' : 'text-navy/20'
-                              )}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                      <span className="text-xs font-semibold text-navy/60 ml-1">
-                        ({rating}/5 {rating >= 4 ? 'Sangat Puas' : 'Cukup'})
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleKonfirmasi('selesai')}
-                        disabled={!currentLap || currentLap.status !== 'selesai'}
-                        className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
-                      >
-                        <Check className="w-4 h-4" />
-                        Sudah Beres / Selesai Tuntas
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleKonfirmasi('revisi')}
-                        disabled={!currentLap || currentLap.status !== 'selesai'}
-                        className="flex-1 py-3 bg-white hover:bg-rose-50 text-crimson border-2 border-crimson/40 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Belum Sesuai / Butuh Tindak Lanjut
-                      </button>
-                    </div>
-                  </div>
-                ) : konfirmasiStatus === 'selesai' ? (
-                  <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-center space-y-1 animate-in fade-in">
-                    <p className="text-xs font-extrabold text-emerald-800">
-                      Konfirmasi hasil berhasil disimpan.
-                    </p>
-                    <p className="text-[11px] text-emerald-700">
-                      Terima kasih telah memberikan penilaian.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl text-center space-y-1 animate-in fade-in">
-                    <p className="text-xs font-extrabold text-crimson">
-                      Permintaan tindak lanjut berhasil disimpan.
-                    </p>
-                    <p className="text-[11px] text-navy/70">
-                      Petugas dapat meninjau permintaan ini melalui antrean laporan.
-                    </p>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Bantuan Langsung */}
               <div className="bg-panel p-4 rounded-2xl border border-navy/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
