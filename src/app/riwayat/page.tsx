@@ -213,6 +213,9 @@ function RiwayatContent() {
     let aktif = true;
     setActiveTicket(null);
     setAksiNotice(null);
+    setPreviewFotoSesudah(null);
+    setBerkasFotoSesudah(null);
+    setPesanPetugas(null);
     lacak(activeKode).then((laporan) => {
       if (!aktif) return;
       setActiveTicket(laporan);

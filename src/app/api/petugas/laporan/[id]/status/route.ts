@@ -72,6 +72,15 @@ export async function PATCH(
     if (foto_sesudah_paths && foto_sesudah_paths.length > 0) {
       updatePayload.foto_sesudah_paths = foto_sesudah_paths;
     }
+    if (catatan && catatan.trim()) {
+      updatePayload.catatan_teknis = {
+        berita_acara: catatan.trim(),
+        regu_pelaksana: 'Tim Reaksi Cepat Lapangan',
+        mandor: auth.role === 'admin' ? 'Administrator Pengawas Lapangan' : 'Petugas Lapangan Berwenang',
+        waktu_selesai: new Date().toLocaleString('id-ID'),
+        status_fisik: 'Perbaikan Selesai 100%',
+      };
+    }
 
     const { error: errUpdate } = await supabaseAdmin
       .from('laporan')
