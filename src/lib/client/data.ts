@@ -122,8 +122,8 @@ export async function getDashboard(forceFresh = false): Promise<Dashboard> {
     };
   }
 
-  // Kembalikan cache instan jika usia data < 30 detik untuk rendering instan
-  if (!forceFresh && cachedDashboard && Date.now() - cachedDashboardAt < 30_000) {
+  // Kembalikan cache instan jika usia data < 5 detik untuk rendering instan tanpa delay lama
+  if (!forceFresh && cachedDashboard && Date.now() - cachedDashboardAt < 5_000) {
     return cachedDashboard;
   }
 

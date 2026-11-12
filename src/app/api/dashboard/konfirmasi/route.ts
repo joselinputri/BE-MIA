@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       p_periode_akhir: periode_akhir || `${tahunBerjalan}-12-31`,
       p_kategori_slug: kategori || null,
       p_kecamatan_kode: kecamatan || null,
-      p_sumber: sumber || 'semua',
+      p_sumber: sumber || 'asli',
     });
 
     const res = data?.[0] || {

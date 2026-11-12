@@ -72,15 +72,6 @@ export async function PATCH(
     if (foto_sesudah_paths && foto_sesudah_paths.length > 0) {
       updatePayload.foto_sesudah_paths = foto_sesudah_paths;
     }
-    if (catatan && catatan.trim()) {
-      updatePayload.catatan_teknis = {
-        berita_acara: catatan.trim(),
-        regu_pelaksana: 'Tim Reaksi Cepat Lapangan',
-        mandor: auth.role === 'admin' ? 'Administrator Pengawas Lapangan' : 'Petugas Lapangan Berwenang',
-        waktu_selesai: new Date().toLocaleString('id-ID'),
-        status_fisik: 'Perbaikan Selesai 100%',
-      };
-    }
 
     const { error: errUpdate } = await supabaseAdmin
       .from('laporan')
@@ -88,31 +79,40 @@ export async function PATCH(
       .eq('id', laporanId);
 
     if (errUpdate) {
-      return apiError('INTERNAL_ERROR', 'Gagal memperbarui status laporan');
+      console.error('[petugas/status] errUpdate:', errUpdate.message, errUpdate.details);
+      return apiError('INTERNAL_ERROR', `Gagal memperbarui status laporan: ${errUpdate.message}`);
     }
 
-    // Catat ke status_history
-    await supabaseAdmin.from('status_history').insert({
-      laporan_id: laporanId,
-      status_dari: laporan.status,
-      status_ke,
-      catatan: catatan || null,
-      diubah_oleh: auth.userId,
-    });
-
-    // Catat ke audit_log
-    await supabaseAdmin.from('audit_log').insert({
-      user_id: auth.userId,
-      aksi: 'ubah_status',
-      tabel_target: 'laporan',
-      record_id: laporanId,
-      detail: {
+    // Catat ke status_history (non-blocking)
+    try {
+      await supabaseAdmin.from('status_history').insert({
+        laporan_id: laporanId,
         status_dari: laporan.status,
         status_ke,
-        catatan,
-        kode_lacak: laporan.kode_lacak,
-      },
-    });
+        catatan: catatan || null,
+        diubah_oleh: auth.userId,
+      });
+    } catch (e: any) {
+      console.warn('[petugas/status] Gagal mencatat status_history:', e?.message);
+    }
+
+    // Catat ke audit_log (non-blocking)
+    try {
+      await supabaseAdmin.from('audit_log').insert({
+        user_id: auth.userId,
+        aksi: 'ubah_status',
+        tabel_target: 'laporan',
+        record_id: laporanId,
+        detail: {
+          status_dari: laporan.status,
+          status_ke,
+          catatan,
+          kode_lacak: laporan.kode_lacak,
+        },
+      });
+    } catch (e: any) {
+      console.warn('[petugas/status] Gagal mencatat audit_log:', e?.message);
+    }
 
     return apiSukses({
       id: laporanId,
