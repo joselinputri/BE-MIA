@@ -1,46 +1,40 @@
 /**
  * src/lib/server/peran-khusus.ts
- * Whitelist Email & Kode Khusus untuk Petugas Lapangan & Administrator
+ * Whitelist Email Khusus Administrator & Petugas
  * Platform RAMPUNG — Pelaporan Aduan Warga Kota Surakarta
  */
 
 export const ADMIN_EMAILS = [
   'admin@surakarta.go.id',
   'admin.rampung@surakarta.go.id',
-  'renereneen@gmail.com', // Akun pengembang / penguji utama
+  'renereneen@gmail.com',
+  'jose.surakarta13@gmail.com',
+  'josesurakarta13@gmail.com',
+  'jose@surakarta13.com',
+  'jose@surakarta.go.id',
 ];
 
 export const PETUGAS_EMAILS = [
   'petugas@surakarta.go.id',
+  'petugas.rampung@surakarta.go.id',
   'dpupr@surakarta.go.id',
   'dishub@surakarta.go.id',
   'dlh@surakarta.go.id',
 ];
 
 /**
- * Cek peran otomatis berbasis pola email
- * Mendukung kode unik untuk tim juri/penguji:
- * - Email berakhiran atau mengandung "+admin" atau "+petugas"
- *   Contoh: juri+admin@gmail.com, rampung.admin@gmail.com -> 'admin'
- *   Contoh: juri+petugas@gmail.com, rampung.petugas@gmail.com -> 'petugas'
- * - Domain resmi instansi (@surakarta.go.id)
+ * Cek peran akun secara ketat berbasis email
  */
 export function tentukanPeranDariEmail(email?: string | null): 'warga' | 'petugas' | 'admin' {
   if (!email) return 'warga';
   const cleanEmail = email.trim().toLowerCase();
 
-  // 1. Whitelist eksplisit
+  // 1. Whitelist Administrator
   if (ADMIN_EMAILS.includes(cleanEmail)) return 'admin';
+
+  // 2. Whitelist Petugas Lapangan
   if (PETUGAS_EMAILS.includes(cleanEmail)) return 'petugas';
 
-  // 2. Kode unik penilai/juri (kemudahan demo kompetisi)
-  // Contoh: admin-juri@..., *admin*@surakarta.go.id, *+admin*@gmail.com
-  if (cleanEmail.includes('+admin') || cleanEmail.startsWith('admin.') || cleanEmail.startsWith('admin_') || cleanEmail.startsWith('admin-')) {
-    return 'admin';
-  }
-  if (cleanEmail.includes('+petugas') || cleanEmail.startsWith('petugas.') || cleanEmail.startsWith('petugas_') || cleanEmail.startsWith('petugas-')) {
-    return 'petugas';
-  }
-
+  // Selain email khusus di atas, seluruh pendaftar murni sebagai warga
   return 'warga';
 }
