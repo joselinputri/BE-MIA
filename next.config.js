@@ -1,5 +1,8 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: path.join(__dirname),
   reactStrictMode: false, // Disabling strict mode prevents double mounting of Leaflet canvas
   poweredByHeader: false, // Menghapus header X-Powered-By untuk keamanan
   images: {
