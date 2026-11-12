@@ -15,7 +15,6 @@ import {
   Star,
   Check,
   RotateCcw,
-  ShieldCheck,
   PhoneCall,
   UserCheck,
   Sparkles,
@@ -228,15 +227,7 @@ function RiwayatContent() {
             </p>
           </div>
 
-          <div className="bg-white/90 backdrop-blur-sm px-4 py-3 rounded-2xl border border-navy/10 shadow-sm flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-navy/60">Sumber Data</p>
-              <p className="text-xs font-extrabold text-navy">{USE_MOCK ? 'Data Demo' : 'Supabase'}</p>
-            </div>
-          </div>
+
         </header>
       </Reveal>
 

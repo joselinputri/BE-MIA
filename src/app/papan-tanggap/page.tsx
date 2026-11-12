@@ -51,7 +51,7 @@ export default function PapanTanggapPage() {
             </p>
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-400/40 shadow-sm">
               <span className="size-2 rounded-full bg-emerald-600 animate-pulse" />
-              Realtime Database Connected (Supabase)
+              Pembaruan Langsung Aktif
             </span>
           </div>
           <div>

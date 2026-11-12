@@ -36,20 +36,20 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
     <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 p-4 sm:p-5 shadow-sm space-y-3">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-xs">
-            <Bot className="w-4 h-4" />
+          <div className="p-2 rounded-xl bg-navy text-white shadow-xs">
+            <Sparkles className="w-4 h-4 text-amber-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-extrabold text-navy tracking-tight uppercase">
-                Inspeksi Cerdas Google Gemini 3.5
+                Verifikasi Semantik Aduan
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/10 text-indigo-700 border border-indigo-200">
-                AI Civic Verifier
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-navy/10 text-navy border border-navy/20">
+                Audit Otomatis
               </span>
             </div>
             <p className="text-[11px] text-navy/70 mt-0.5">
-              Analisa otomatis semantik laporan infrastruktur publik Kota Surakarta.
+              Validasi kelayakan dan klasifikasi urgensi penanganan fasilitas publik.
             </p>
           </div>
         </div>

@@ -262,64 +262,87 @@ export default function Beranda() {
       <Reveal delay={160}>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4" aria-label="Statistik laporan">
           {/* Card: Laporan Bulan Ini */}
-          <Kartu className="flex flex-col gap-2 border border-crimson/20 !bg-white p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate">Laporan Bulan Ini</span>
-            <span className="text-3xl font-bold text-navy">
+          <Kartu className="relative flex flex-col gap-1.5 overflow-hidden border border-crimson/20 !bg-white p-5 shadow-md">
+            <div className="absolute right-4 top-4 rounded-xl bg-crimson/10 p-2">
+              <svg className="h-4 w-4 text-crimson" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-crimson">Bulan Ini</span>
+            <span className="text-4xl font-black text-navy leading-none">
               <CountUp to={r?.laporan_bulan_ini ?? 0} />
             </span>
-            <div className="flex items-end gap-1" aria-hidden="true">
+            <span className="text-xs font-semibold text-navy/60">aduan masuk</span>
+            <div className="mt-1 flex items-end gap-0.5 h-7" aria-hidden="true">
               {trenTerbaru.map((item, i) => (
-                <div key={item.bulan} className="bar-grow w-3 rounded-t bg-peri/70" style={{ height: `${(item.jumlah_masuk / nilaiTrenMaks) * 32}px`, animationDelay: `${i * 120}ms` }} />
+                <div key={item.bulan} className="bar-grow flex-1 rounded-t bg-crimson/30 hover:bg-crimson/50 transition-colors" style={{ height: `${Math.max(4, (item.jumlah_masuk / nilaiTrenMaks) * 28)}px`, animationDelay: `${i * 100}ms` }} />
               ))}
             </div>
-            <span className="text-[10px] text-slate font-semibold">Berdasarkan laporan yang tercatat</span>
           </Kartu>
 
           {/* Card: Rampung */}
-          <Kartu className="flex flex-col gap-2 border border-emerald-700/20 !bg-emerald-50 p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate">Rampung</span>
-            <span className="text-3xl font-bold text-navy">
+          <Kartu className="relative flex flex-col gap-1.5 overflow-hidden border border-emerald-600/25 !bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5 shadow-md">
+            <div className="absolute right-4 top-4 rounded-xl bg-emerald-600/15 p-2">
+              <svg className="h-4 w-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-700">Tuntas</span>
+            <span className="text-4xl font-black text-navy leading-none">
               <CountUp to={r?.laporan_selesai ?? 0} />
             </span>
-            {/* Circular progress */}
-            <div className="flex items-center gap-2">
-              <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true" className="shrink-0">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="#C5C2D1" strokeWidth="3" />
+            <span className="text-xs font-semibold text-navy/60">aduan diselesaikan</span>
+            <div className="mt-1 flex items-center gap-2.5">
+              <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true" className="shrink-0">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#bbf7d0" strokeWidth="4" />
                 <circle
-                  cx="18" cy="18" r="15" fill="none" stroke="#A40033" strokeWidth="3"
+                  cx="18" cy="18" r="15" fill="none" stroke="#059669" strokeWidth="4"
                   strokeDasharray={`${(r?.persentase_selesai ?? 0) * 0.9424} 94.24`}
                   strokeLinecap="round" transform="rotate(-90 18 18)"
                   className="bar-grow"
                 />
               </svg>
-              <span className="text-xs font-bold text-crimson"><CountUp to={r?.persentase_selesai ?? 0} desimal={0} sufiks="%" /></span>
+              <span className="text-sm font-black text-emerald-700"><CountUp to={r?.persentase_selesai ?? 0} desimal={0} sufiks="%" /></span>
+              <span className="text-[10px] text-emerald-700/70 font-semibold">tingkat penyelesaian</span>
             </div>
           </Kartu>
 
           {/* Card: Sedang Dikerjakan */}
-          <Kartu className="flex flex-col gap-2 border border-amber-700/20 !bg-amber-50 p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate">Sedang Dikerjakan</span>
-            <span className="text-3xl font-bold text-navy">
+          <Kartu className="relative flex flex-col gap-1.5 overflow-hidden border border-amber-500/25 !bg-gradient-to-br from-amber-50 to-orange-50/70 p-5 shadow-md">
+            <div className="absolute right-4 top-4 rounded-xl bg-amber-500/15 p-2">
+              <Activity className="h-4 w-4 text-amber-600" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-700">Diproses</span>
+            <span className="text-4xl font-black text-navy leading-none">
               <CountUp to={r?.sedang_dikerjakan ?? 0} />
             </span>
-            <Activity className="h-6 w-6 text-amber-500" aria-hidden="true" />
+            <span className="text-xs font-semibold text-navy/60">sedang dikerjakan</span>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="inline-block size-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-amber-700">Aktif ditangani OPD</span>
+            </div>
           </Kartu>
 
           {/* Card: Rata-rata Harian */}
-          <Kartu className="flex flex-col gap-2 border border-indigo-700/20 !bg-[#e9e8f4] p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate">Rata-rata Laporan Harian</span>
-            <span className="text-3xl font-bold text-navy">
+          <Kartu className="relative flex flex-col gap-1.5 overflow-hidden border border-peri/30 !bg-gradient-to-br from-[#eceaf8] to-[#e2e0f5] p-5 shadow-md">
+            <div className="absolute right-4 top-4 rounded-xl bg-peri/20 p-2">
+              <svg className="h-4 w-4 text-peri" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-peri">Rata-rata Harian</span>
+            <span className="text-4xl font-black text-navy leading-none">
               <CountUp to={r?.rata_rata_harian ?? 0} />
             </span>
-            {/* Sparkline decoration */}
-            <svg viewBox="0 0 80 24" className="h-6 w-full" aria-hidden="true">
+            <span className="text-xs font-semibold text-navy/60">aduan / hari</span>
+            <svg viewBox="0 0 80 24" className="mt-1 h-7 w-full" aria-hidden="true">
+              <defs>
+                <linearGradient id="spark-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#A199D4" />
+                  <stop offset="100%" stopColor="#6B5FBF" />
+                </linearGradient>
+              </defs>
               <polyline
-              points={trenTerbaru.map((item, i) => {
-                const x = trenTerbaru.length > 1 ? (i / (trenTerbaru.length - 1)) * 80 : 40;
-                const y = 22 - (item.jumlah_masuk / nilaiTrenMaks) * 18;
-                return `${x},${y}`;
-              }).join(' ')}
-                fill="none" stroke="#959EC9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                points={trenTerbaru.map((item, i) => {
+                  const x = trenTerbaru.length > 1 ? (i / (trenTerbaru.length - 1)) * 80 : 40;
+                  const y = 22 - (item.jumlah_masuk / nilaiTrenMaks) * 18;
+                  return `${x},${y}`;
+                }).join(' ')}
+                fill="none" stroke="url(#spark-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
               />
             </svg>
           </Kartu>
