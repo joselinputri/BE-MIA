@@ -82,3 +82,4 @@ export async function GET(req: NextRequest) {
     return apiError('INTERNAL_ERROR', 'Gagal memuat ulasan suara warga.');
   }
 }
+

@@ -41,8 +41,10 @@ export default function PapanTanggapPage() {
 
   const dashData: Dashboard = dashboard || (dashboardMock as unknown as Dashboard);
   const ringkasan = dashData.ringkasan;
-  const tren: Tren[] = dashData.tren || [];
-  const nilaiTrenMaks = Math.max(1, ...tren.map((item: Tren) => item.jumlah_masuk));
+  const trenData: Tren[] = dashData.tren || [];
+  const trenAktif = trenData.filter((t: Tren) => t.jumlah_masuk > 0 || t.jumlah_selesai > 0);
+  const trenTampil: Tren[] = trenAktif.length > 0 ? trenAktif.slice(-6) : trenData.slice(-4);
+  const nilaiTrenMaks = Math.max(1, ...trenTampil.map((item: Tren) => item.jumlah_masuk));
 
   useEffect(() => {
     // Ambil ulasan warga dan sebaran wilayah dinamis dari backend
@@ -151,30 +153,36 @@ export default function PapanTanggapPage() {
               <p className="mt-6 text-sm text-navy/60">Memuat tren laporan…</p>
             ) : dashboard?.error ? (
               <p className="mt-6 text-sm text-navy/60">Tren tidak tersedia karena data gagal dimuat.</p>
-            ) : tren.length === 0 ? (
+            ) : trenTampil.length === 0 ? (
               <p className="mt-6 text-sm text-navy/60">Belum ada data tren untuk ditampilkan.</p>
             ) : (
               <div className="mt-6 space-y-4">
-                {tren.map((item) => (
-                  <div key={item.bulan} className="grid grid-cols-[4rem_1fr_5rem] items-center gap-3">
-                    <span className="text-xs font-semibold text-navy">{item.bulan}</span>
-                    <div className="space-y-1">
-                      <div
-                        className="h-2 rounded-full bg-crimson"
-                        style={{ width: `${Math.max(2, (item.jumlah_masuk / nilaiTrenMaks) * 100)}%` }}
-                        title={`${item.jumlah_masuk} laporan masuk`}
-                      />
-                      <div
-                        className="h-2 rounded-full bg-emerald-600"
-                        style={{ width: `${Math.max(2, (item.jumlah_selesai / nilaiTrenMaks) * 100)}%` }}
-                        title={`${item.jumlah_selesai} laporan selesai`}
-                      />
+                {trenTampil.map((item) => {
+                  const labelBulan = new Date(item.bulan).toLocaleDateString('id-ID', {
+                    month: 'short',
+                    year: 'numeric',
+                  });
+                  return (
+                    <div key={item.bulan} className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3">
+                      <span className="text-xs font-semibold text-navy capitalize">{labelBulan}</span>
+                      <div className="space-y-1">
+                        <div
+                          className="h-2 rounded-full bg-crimson"
+                          style={{ width: `${Math.max(2, (item.jumlah_masuk / nilaiTrenMaks) * 100)}%` }}
+                          title={`${item.jumlah_masuk} laporan masuk`}
+                        />
+                        <div
+                          className="h-2 rounded-full bg-emerald-600"
+                          style={{ width: `${Math.max(2, (item.jumlah_selesai / nilaiTrenMaks) * 100)}%` }}
+                          title={`${item.jumlah_selesai} laporan selesai`}
+                        />
+                      </div>
+                      <span className="text-right text-[10px] text-navy/60 font-semibold">
+                        {formatAngka(item.jumlah_masuk)} / {formatAngka(item.jumlah_selesai)}
+                      </span>
                     </div>
-                    <span className="text-right text-[10px] text-navy/60">
-                      {formatAngka(item.jumlah_masuk)} / {formatAngka(item.jumlah_selesai)}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
                 <div className="flex gap-4 pt-2 text-[11px] font-semibold text-navy/70">
                   <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-crimson" />Masuk</span>
                   <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-600" />Selesai</span>

@@ -73,3 +73,4 @@ export async function GET(req: NextRequest) {
     return apiError('INTERNAL_ERROR', 'Gagal memuat sebaran wilayah kecamatan.');
   }
 }
+

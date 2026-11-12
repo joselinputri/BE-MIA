@@ -476,7 +476,8 @@ export async function kirimKonfirmasiAudit(
   laporanId: string,
   jawaban: 'puas' | 'biasa' | 'kurang_puas',
   rating: number,
-  mintaBukaUlang: boolean
+  mintaBukaUlang: boolean,
+  komentar?: string
 ): Promise<{ ok: boolean; pesan: string }> {
   if (USE_MOCK) {
     return { ok: false, pesan: 'Konfirmasi belum disimpan. Hubungkan Supabase untuk mengaktifkan fitur ini.' };
@@ -486,7 +487,7 @@ export async function kirimKonfirmasiAudit(
     const res = await fetchAuthed(`/api/laporan/${laporanId}/konfirmasi`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jawaban, rating, minta_buka_ulang: mintaBukaUlang }),
+      body: JSON.stringify({ jawaban, rating, minta_buka_ulang: mintaBukaUlang, komentar }),
     });
     const json = await res.json();
     if (res.ok && json.data) {

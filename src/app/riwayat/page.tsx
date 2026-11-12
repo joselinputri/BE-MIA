@@ -58,6 +58,7 @@ function RiwayatContent() {
   const [filterWilayah, setFilterWilayah] = useState<string>('Semua');
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
   const [rating, setRating] = useState<number>(5);
+  const [komentarUlasan, setKomentarUlasan] = useState<string>('');
   const [konfirmasiStatus, setKonfirmasiStatus] = useState<'idle' | 'selesai' | 'revisi'>('idle');
   const [jumlahDukungan, setJumlahDukungan] = useState<number>(0);
   const [sudahDukung, setSudahDukung] = useState<boolean>(false);
@@ -269,7 +270,8 @@ function RiwayatContent() {
       currentLap.id,
       status === 'selesai' ? 'puas' : 'kurang_puas',
       rating,
-      status === 'revisi'
+      status === 'revisi',
+      komentarUlasan.trim() || undefined
     );
     if (result.ok) {
       setKonfirmasiStatus(status);
@@ -884,6 +886,19 @@ function RiwayatContent() {
                         <span className="text-xs font-semibold text-navy/60 ml-1">
                           ({rating}/5 {rating >= 4 ? 'Sangat Puas' : 'Cukup'})
                         </span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-navy">
+                          Suara Warga / Testimoni Layanan (Opsional):
+                        </label>
+                        <input
+                          type="text"
+                          value={komentarUlasan}
+                          onChange={(e) => setKomentarUlasan(e.target.value)}
+                          placeholder="Tuliskan ulasan langsung Anda mengenai hasil perbaikan di lokasi..."
+                          className="w-full rounded-xl border border-navy/15 px-3 py-2 text-xs text-navy focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                        />
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-3">

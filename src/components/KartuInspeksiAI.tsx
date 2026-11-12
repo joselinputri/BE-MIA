@@ -12,12 +12,22 @@ interface KartuInspeksiAIProps {
 export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
   const [bukaDetail, setBukaDetail] = useState(false);
 
-  const gabunganTeks = `${laporan.judul || ''} ${laporan.deskripsi || ''}`.toLowerCase();
+  const judul = (laporan.judul || '').trim();
+  const deskripsi = (laporan.deskripsi || '').trim();
+  const gabunganTeks = `${judul} ${deskripsi}`.toLowerCase();
+
+  // Evaluasi spam eksplisit
   const adaIndikasiSpam =
     laporan.penanda?.includes('perlu_verifikasi_tambahan') ||
-    /joki|open joki|jasa tugas|slot|gacor|maxwin|judol|pinjol|pinjaman|dana cair|dana cepat|dana kilat|wa\.me/i.test(
+    /\b(joki|open joki|jasa tugas|slot|gacor|maxwin|judol|pinjol|pinjaman|dana cair|dana cepat|dana kilat|open bo|vcs)\b/i.test(
       gabunganTeks
-    );
+    ) ||
+    /wa\.me\//i.test(gabunganTeks);
+
+  // Evaluasi kejelasan konten (apakah teks hanya asal ketik / spam huruf acak)
+  const hanyaHurufAcak = /^[a-z\s.,\-_]{1,30}$/i.test(judul) && !/\s/.test(judul.trim()) && judul.length > 5;
+  const teksSangatPendek = (judul.length + deskripsi.length) < 25;
+  const kataBermakna = /jalan|aspal|rusak|lubang|lampu|pju|mati|sampah|bau|saluran|drainase|banjir|pohon|rambu|trotoar|fasilitas/i.test(gabunganTeks);
 
   // Klasifikasi dinas pengampu otomatis berdasarkan konten / kategori laporan
   let dinasTerkait = laporan.dinas;
@@ -33,12 +43,15 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
     }
   }
 
-  let skorKelayakan = 94;
+  let skorKelayakan = 92;
   let urgensi = 'Sedang';
 
   if (adaIndikasiSpam) {
     skorKelayakan = 24;
-    urgensi = 'Rendah (Ditandai Anomali)';
+    urgensi = 'Rendah (Ditandai Anomali / Spam)';
+  } else if (!kataBermakna && (teksSangatPendek || hanyaHurufAcak)) {
+    skorKelayakan = 35;
+    urgensi = 'Rendah (Deskripsi Kurang Jelas)';
   } else if (/ambruk|putus|longsor|tergenang banjir|korban|darurat/i.test(gabunganTeks)) {
     skorKelayakan = 98;
     urgensi = 'Tinggi (Prioritas Keselamatan)';
