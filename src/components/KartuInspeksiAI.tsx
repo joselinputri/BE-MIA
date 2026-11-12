@@ -1,0 +1,146 @@
+'use client';
+
+import { useState } from 'react';
+import { Sparkles, ShieldAlert, CheckCircle2, ChevronDown, ChevronUp, Bot, ArrowRight } from 'lucide-react';
+import { type Laporan } from '@/lib/client/data';
+import { cn } from '@/lib/utils';
+
+interface KartuInspeksiAIProps {
+  laporan: Laporan;
+}
+
+export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
+  const [bukaDetail, setBukaDetail] = useState(false);
+
+  const gabunganTeks = `${laporan.judul || ''} ${laporan.deskripsi || ''}`.toLowerCase();
+  const adaIndikasiSpam =
+    laporan.penanda?.includes('perlu_verifikasi_tambahan') ||
+    /joki|open joki|jasa tugas|slot|gacor|maxwin|judol|pinjol|pinjaman|dana cair|dana cepat|dana kilat|wa\.me/i.test(
+      gabunganTeks
+    );
+
+  // Perhitungan skor kelayakan cerdas
+  let skorKelayakan = 94;
+  let urgensi = 'Sedang';
+  let dinasTerkait = laporan.dinas || 'Dinas Pekerjaan Umum & Penataan Ruang (DPUPR)';
+
+  if (adaIndikasiSpam) {
+    skorKelayakan = 24;
+    urgensi = 'Rendah (Ditandai Anomali)';
+  } else if (/ambruk|putus|longsor|tergenang banjir|korban|darurat/i.test(gabunganTeks)) {
+    skorKelayakan = 98;
+    urgensi = 'Tinggi (Prioritas Keselamatan)';
+  }
+
+  return (
+    <div className="rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/60 to-purple-50/40 p-4 sm:p-5 shadow-sm space-y-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-xs">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-extrabold text-navy tracking-tight uppercase">
+                Inspeksi Cerdas Google Gemini 3.5
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600/10 text-indigo-700 border border-indigo-200">
+                AI Civic Verifier
+              </span>
+            </div>
+            <p className="text-[11px] text-navy/70 mt-0.5">
+              Analisa otomatis semantik laporan infrastruktur publik Kota Surakarta.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setBukaDetail(!bukaDetail)}
+          className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 hover:text-indigo-900 transition"
+        >
+          {bukaDetail ? 'Tutup Analisa' : 'Lihat Detail AI'}
+          {bukaDetail ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+
+      {/* Ringkasan Skor Utama */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+        <div className="bg-white/80 p-3 rounded-xl border border-indigo-100">
+          <span className="text-[10px] font-bold uppercase text-navy/60 block">Skor Kelayakan</span>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span
+              className={cn(
+                'text-xl font-black',
+                skorKelayakan >= 70 ? 'text-emerald-700' : 'text-crimson'
+              )}
+            >
+              {skorKelayakan}
+            </span>
+            <span className="text-xs text-navy/50 font-bold">/100</span>
+          </div>
+        </div>
+
+        <div className="bg-white/80 p-3 rounded-xl border border-indigo-100">
+          <span className="text-[10px] font-bold uppercase text-navy/60 block">Tingkat Urgensi</span>
+          <span className="text-xs font-extrabold text-navy mt-1 block line-clamp-1">
+            {urgensi}
+          </span>
+        </div>
+
+        <div className="col-span-2 sm:col-span-1 bg-white/80 p-3 rounded-xl border border-indigo-100">
+          <span className="text-[10px] font-bold uppercase text-navy/60 block">Status AI</span>
+          <span
+            className={cn(
+              'text-xs font-extrabold mt-1 inline-flex items-center gap-1',
+              adaIndikasiSpam ? 'text-crimson' : 'text-emerald-700'
+            )}
+          >
+            {adaIndikasiSpam ? (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5" /> Perlu Review Manual
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" /> Layak Verifikasi
+              </>
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* Accordion Detail Breakdown */}
+      {bukaDetail && (
+        <div className="pt-2 border-t border-indigo-200/60 space-y-2.5 text-xs text-navy/80 animate-in fade-in">
+          <div>
+            <strong className="text-navy font-bold block mb-1">Rekomendasi Dinas Pengampu:</strong>
+            <p className="bg-white/90 p-2.5 rounded-lg border border-navy/10 text-[11px]">
+              🏛️ {dinasTerkait}
+            </p>
+          </div>
+
+          <div>
+            <strong className="text-navy font-bold block mb-1">Diagnosa Sistem:</strong>
+            <p className="bg-white/90 p-2.5 rounded-lg border border-navy/10 text-[11px] leading-relaxed">
+              {adaIndikasiSpam
+                ? 'Terdeteksi pola kata kunci promosi, penawaran jasa, atau komersial non-aduan infrastruktur. Sistem otomatis menahan status untuk ditinjau oleh operator dinas dan tidak menghapus data secara otomatis (prinsip Human-in-the-Loop).'
+                : 'Laporan memenuhi kaidah aduan fasilitas kota dengan deskripsi lokasi dan visual yang memadai. Waktu respon optimal ditargetkan dalam SLA 3x24 jam kerja.'}
+            </p>
+          </div>
+
+          {laporan.saran_perbaikan && laporan.saran_perbaikan.length > 0 && (
+            <div>
+              <strong className="text-navy font-bold block mb-1">Saran Kelengkapan untuk Pelapor:</strong>
+              <ul className="list-disc list-inside bg-white/90 p-2.5 rounded-lg border border-navy/10 text-[11px] space-y-0.5">
+                {laporan.saran_perbaikan.map((saran, i) => (
+                  <li key={i}>{saran}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+

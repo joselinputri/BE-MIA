@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import AccessibilityFab from '@/components/AccessibilityFab';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
+import NotifikasiToastLive from '@/components/NotifikasiToastLive';
 import { AuthProvider } from '@/lib/client/auth';
 import './globals.css';
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="isi">{children}</main>
           <Footer />
           <AccessibilityFab />
+          <NotifikasiToastLive />
         </AuthProvider>
       </body>
     </html>

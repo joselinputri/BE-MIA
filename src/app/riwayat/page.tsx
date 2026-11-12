@@ -25,6 +25,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
+import KomparasiSlider from '@/components/KomparasiSlider';
+import KartuInspeksiAI from '@/components/KartuInspeksiAI';
 import { PageHero, Panel, Kartu, Pil, tombolDasar } from '@/components/ui';
 import {
   getLaporanPublik,
@@ -536,6 +538,9 @@ function RiwayatContent() {
                   {currentLap?.deskripsi || 'Periksa kembali kode lacak atau coba lagi setelah data berhasil dimuat.'}
                 </p>
 
+                {/* ── Transparansi / Kartu Inspeksi AI Gemini 3.5 ── */}
+                {currentLap && <KartuInspeksiAI laporan={currentLap} />}
+
                 {cekIndikasiSpam(currentLap) && (
                   <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-xs font-medium text-rose-900 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
@@ -588,6 +593,19 @@ function RiwayatContent() {
                       : 'Lokasi belum tercatat'}
                   </span>
                 </div>
+
+                {/* ── Komparasi Slider Interaktif jika kedua foto tersedia ── */}
+                {currentLap?.foto_sebelum_paths?.[0]?.startsWith('http') &&
+                 currentLap?.foto_sesudah_paths?.[0]?.startsWith('http') && (
+                  <div className="mb-4">
+                    <KomparasiSlider
+                      fotoSebelum={currentLap.foto_sebelum_paths[0]}
+                      fotoSesudah={currentLap.foto_sesudah_paths[0]}
+                      altSebelum="Kondisi Sebelum Penanganan"
+                      altSesudah="Kondisi Tuntas (Hasil Perbaikan)"
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-card rounded-2xl overflow-hidden border border-navy/10 space-y-3 p-3">

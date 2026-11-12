@@ -1,7 +1,7 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
-import { useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, Circle } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -10,7 +10,7 @@ import { Laporan } from '@/lib/client/data';
 import { KATEGORI } from '@/lib/kategori';
 import { statusDari } from '@/lib/status';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Flame, MapPin } from 'lucide-react';
 
 interface PetaLeafletProps {
   laporan: Laporan[];
@@ -141,6 +141,8 @@ export default function PetaLeaflet({
   statusFilter,
   warnaBerdasarkan = 'status',
 }: PetaLeafletProps) {
+  const [modeVisualisasi, setModeVisualisasi] = useState<'marker' | 'sebaran'>('marker');
+
   // Filter titik laporan
   const filtered = useMemo(
     () =>
@@ -185,6 +187,36 @@ export default function PetaLeaflet({
 
   return (
     <div className="relative w-full h-[540px] rounded-2xl overflow-hidden border border-navy/20 shadow-inner">
+      {/* ── Mode Visualisasi Selector: Marker vs Peta Sebaran (Heatmap/Density) ── */}
+      <div className="absolute top-3 right-3 z-[1000] bg-navy/90 backdrop-blur-md p-1 rounded-xl border border-white/20 shadow-lg flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setModeVisualisasi('marker')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            modeVisualisasi === 'marker'
+              ? 'bg-crimson text-white shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+          title="Tampilkan pin lokasi individual aduan"
+        >
+          <MapPin className="w-3.5 h-3.5" />
+          <span>Pin Lokasi</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setModeVisualisasi('sebaran')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            modeVisualisasi === 'sebaran'
+              ? 'bg-crimson text-white shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+          title="Tampilkan radius intensitas / sebaran titik aduan"
+        >
+          <Flame className="w-3.5 h-3.5" />
+          <span>Kepadatan Sebaran</span>
+        </button>
+      </div>
+
       <MapContainer
         center={centerPosition}
         zoom={13}
@@ -200,7 +232,49 @@ export default function PetaLeaflet({
         />
         <SesuaikanViewport laporan={filtered} kecamatanFilter={kecamatanFilter || 'semua'} />
 
-        {kelompokLokasi.map((group) => {
+        {/* ── Mode 1: Lingkaran Densitas Sebaran (Heatmap Simulation) ── */}
+        {modeVisualisasi === 'sebaran' &&
+          kelompokLokasi.map((group) => {
+            const item = group[0];
+            const radius = Math.min(200 + group.length * 150, 800);
+            const isResolved = group.every((l) => l.status === 'selesai');
+            const color = isResolved ? '#10B981' : '#E63946';
+
+            return (
+              <Circle
+                key={`circle-${item.latitude.toFixed(5)},${item.longitude.toFixed(5)}`}
+                center={[item.latitude, item.longitude]}
+                radius={radius}
+                pathOptions={{
+                  color: color,
+                  fillColor: color,
+                  fillOpacity: 0.35,
+                  weight: 2,
+                }}
+                eventHandlers={{
+                  click: () => onSelect && onSelect(item),
+                }}
+              >
+                <Popup className="custom-leaflet-popup">
+                  <div className="p-2 text-navy">
+                    <p className="text-xs font-bold text-navy">
+                      Klaster Aduan ({group.length} Titik)
+                    </p>
+                    <p className="text-[11px] text-navy/70 mt-1">
+                      {item.kelurahan || item.kecamatan || 'Surakarta'}
+                    </p>
+                    <p className="text-[10px] font-semibold text-crimson mt-0.5">
+                      Radius konsentrasi aduan warga
+                    </p>
+                  </div>
+                </Popup>
+              </Circle>
+            );
+          })}
+
+        {/* ── Mode 2: Marker / Pin Lokasi Presisi ── */}
+        {modeVisualisasi === 'marker' &&
+          kelompokLokasi.map((group) => {
           const item = group[0];
           const isSelected = group.some((laporanItem) => laporanItem.id === selectedId);
           const icon =
