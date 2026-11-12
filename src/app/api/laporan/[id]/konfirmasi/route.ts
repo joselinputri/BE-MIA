@@ -45,15 +45,19 @@ export async function POST(
     // Simpan konfirmasi
     const { error: errKonfirmasi } = await supabaseAdmin
       .from('konfirmasi_pelapor')
-      .upsert({
-        laporan_id: laporanId,
-        jawaban,
-        rating: rating || (jawaban === 'puas' ? 5 : jawaban === 'biasa' ? 3 : 1),
-        komentar: komentar || null,
-      });
+      .upsert(
+        {
+          laporan_id: laporanId,
+          jawaban,
+          rating: rating || (jawaban === 'puas' ? 5 : jawaban === 'biasa' ? 3 : 1),
+          komentar: komentar || null,
+        },
+        { onConflict: 'laporan_id' }
+      );
 
     if (errKonfirmasi) {
-      return apiError('INTERNAL_ERROR', 'Gagal menyimpan konfirmasi');
+      console.error('[konfirmasi] DB Error:', errKonfirmasi.message, errKonfirmasi.details);
+      return apiError('INTERNAL_ERROR', `Gagal menyimpan konfirmasi: ${errKonfirmasi.message}`);
     }
 
     // Jika pelapor memilih minta buka ulang (belum beres)

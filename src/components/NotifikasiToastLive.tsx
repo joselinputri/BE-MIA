@@ -6,7 +6,7 @@ import { Bell, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 interface NotifikasiItem {
   id: string;
-  tipe: 'aduan_baru' | 'aduan_selesai';
+  tipe: 'aduan_baru' | 'aduan_selesai' | 'aduan_diproses';
   judul: string;
   pesan: string;
   waktu: string;
@@ -47,6 +47,14 @@ export default function NotifikasiToastLive() {
               pesan: `Tiket #${update.kode_lacak} telah tuntas diperbaiki oleh tim lapangan.`,
               waktu: 'Baru saja',
             });
+          } else if (update.status === 'sedang_ditangani') {
+            tambahNotifikasi({
+              id: `notif-${Date.now()}-${Math.random()}`,
+              tipe: 'aduan_diproses',
+              judul: 'Aduan Sedang Ditangani',
+              pesan: `Tiket #${update.kode_lacak} telah diverifikasi dan tim lapangan sedang bertindak.`,
+              waktu: 'Baru saja',
+            });
           }
         }
       )
@@ -79,11 +87,17 @@ export default function NotifikasiToastLive() {
         >
           <div
             className={`p-2 rounded-xl text-white shrink-0 ${
-              item.tipe === 'aduan_selesai' ? 'bg-emerald-600' : 'bg-crimson'
+              item.tipe === 'aduan_selesai'
+                ? 'bg-emerald-600'
+                : item.tipe === 'aduan_diproses'
+                ? 'bg-amber-500'
+                : 'bg-crimson'
             }`}
           >
             {item.tipe === 'aduan_selesai' ? (
               <CheckCircle2 className="w-4 h-4" />
+            ) : item.tipe === 'aduan_diproses' ? (
+              <AlertCircle className="w-4 h-4" />
             ) : (
               <Bell className="w-4 h-4 animate-bounce" />
             )}
