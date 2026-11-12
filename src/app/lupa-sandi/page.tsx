@@ -23,7 +23,7 @@ export default function LupaSandiPage() {
       }
 
       const { error } = await supabaseBrowser.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/profil`,
+        redirectTo: `${window.location.origin}/perbarui-sandi`,
       });
 
       if (error) {
