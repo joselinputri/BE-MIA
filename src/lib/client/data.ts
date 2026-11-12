@@ -427,6 +427,21 @@ export async function kirimLaporan(payload: BuatLaporanPayload): Promise<{
 
 /* ── Dukungan & Konfirmasi ── */
 
+export async function cekLaporanSerupaClient(
+  lat: number,
+  lng: number,
+  radius = 200
+): Promise<Laporan[]> {
+  try {
+    const res = await fetch(`/api/laporan/serupa?latitude=${lat}&longitude=${lng}&radius_meter=${radius}&maks=3`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function dukungLaporan(laporanId: string): Promise<{ ok: boolean; pesan: string }> {
   if (USE_MOCK) {
     return { ok: false, pesan: 'Dukungan belum disimpan. Hubungkan Supabase untuk mengaktifkan fitur ini.' };

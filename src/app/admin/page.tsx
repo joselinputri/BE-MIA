@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, UsersRound, ClipboardList, AlertTriangle, CheckCircle, Trash2, XCircle } from 'lucide-react';
+import { ShieldCheck, UsersRound, ClipboardList, AlertTriangle, CheckCircle, Trash2, XCircle, FileText, Activity } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { useAuth } from '@/lib/client/auth';
 import { fetchAuthed } from '@/lib/client/supabase';
@@ -22,12 +22,16 @@ interface AdminUser {
 export default function AdminPage() {
   const router = useRouter();
   const { pengguna, siap } = useAuth();
-  const [tabAktif, setTabAktif] = useState<'moderasi' | 'pengguna'>('moderasi');
+  const [tabAktif, setTabAktif] = useState<'moderasi' | 'pengguna' | 'audit'>('moderasi');
 
   // State Pengguna
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
+
+  // State Audit Logs
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
 
   // State Moderasi Laporan
   const [daftarLaporan, setDaftarLaporan] = useState<Laporan[]>([]);
@@ -74,6 +78,18 @@ export default function AdminPage() {
       });
 
     void muatDataLaporan();
+
+    // Muat Audit Logs
+    setLoadingAudit(true);
+    void fetchAuthed('/api/admin/audit-log')
+      .then(async (res) => {
+        const j = await res.json();
+        if (aktif && j.data) setAuditLogs(j.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (aktif) setLoadingAudit(false);
+      });
 
     return () => { aktif = false; };
   }, [muatDataLaporan, pengguna, router, siap]);
@@ -182,6 +198,19 @@ export default function AdminPage() {
         >
           <UsersRound className="size-4" />
           <span>Kelola Pengguna ({users.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabAktif('audit')}
+          className={cn(
+            'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2',
+            tabAktif === 'audit'
+              ? 'bg-crimson text-white shadow-sm'
+              : 'bg-white/80 text-navy hover:bg-white'
+          )}
+        >
+          <FileText className="size-4" />
+          <span>Log Audit Keamanan ({auditLogs.length})</span>
         </button>
       </div>
 
@@ -340,6 +369,68 @@ export default function AdminPage() {
                       <td className="px-4 py-3">{new Date(user.created_at).toLocaleDateString('id-ID')}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </Reveal>
+      )}
+
+      {/* ── TAB 3: LOG AUDIT KEAMANAN (APPEND-ONLY) ── */}
+      {tabAktif === 'audit' && (
+        <Reveal delay={60}>
+          <section className="rounded-3xl border border-navy/10 bg-panel p-5 shadow-sm sm:p-7 space-y-4">
+            <div>
+              <h2 className="text-lg font-extrabold text-navy">Log Audit Keamanan (Append-Only Trail)</h2>
+              <p className="text-xs text-navy/70 mt-0.5">
+                Pencatatan kriptografis seluruh aksi administratif sensitif, moderasi tiket, dan perubahan peran pengguna untuk audit transparansi.
+              </p>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-navy/10 bg-white">
+              <table className="w-full min-w-[700px] text-left text-xs">
+                <thead className="bg-card text-[11px] uppercase text-navy/70">
+                  <tr>
+                    <th className="px-4 py-3">Waktu Kejadian</th>
+                    <th className="px-4 py-3">Aksi Administratif</th>
+                    <th className="px-4 py-3">Target Entitas</th>
+                    <th className="px-4 py-3">Pelaksana</th>
+                    <th className="px-4 py-3">Alamat IP / Jejak</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-navy/10">
+                  {loadingAudit ? (
+                    <tr><td colSpan={5} className="px-4 py-8 text-center text-navy/60">Memuat catatan log audit…</td></tr>
+                  ) : auditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-navy/60">
+                        Belum ada aktivitas administratif sensitif yang tercatat pada sesi ini.
+                      </td>
+                    </tr>
+                  ) : (
+                    auditLogs.map((log, idx) => (
+                      <tr key={log.id || idx} className="text-navy">
+                        <td className="px-4 py-3 font-mono text-[11px]">
+                          {log.created_at ? new Date(log.created_at).toLocaleString('id-ID') : '—'}
+                        </td>
+                        <td className="px-4 py-3 font-bold">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-navy font-mono">
+                            {log.aksi || 'MODIFIKASI_DATA'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {log.tabel_target || log.target || 'Laporan'}
+                          {log.record_id ? ` #${log.record_id.slice(0, 8)}` : ''}
+                        </td>
+                        <td className="px-4 py-3 font-semibold">
+                          {log.user?.nama || 'Administrator'}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-[10px] text-navy/60">
+                          {log.ip_address || '127.0.0.1'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

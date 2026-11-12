@@ -26,7 +26,7 @@ import {
 import Reveal from '@/components/Reveal';
 import { PageHero, Pil, tombolDasar } from '@/components/ui';
 import { KATEGORI, type KategoriUI } from '@/lib/kategori';
-import { kirimLaporan } from '@/lib/client/data';
+import { kirimLaporan, cekLaporanSerupaClient, type Laporan } from '@/lib/client/data';
 import { useAuth } from '@/lib/client/auth';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +83,7 @@ export default function LaporPage() {
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [laporanSerupa, setLaporanSerupa] = useState<Laporan[]>([]);
   const [suksesModal, setSuksesModal] = useState<{
     kode: string;
     pesan: string;
@@ -94,6 +95,16 @@ export default function LaporPage() {
   const errorRef = useRef<HTMLDivElement>(null);
   const turnstileContainerRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!latitude || !longitude) return;
+    const timer = setTimeout(() => {
+      void cekLaporanSerupaClient(latitude, longitude, 300).then((data) => {
+        setLaporanSerupa(data);
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [latitude, longitude]);
 
   useEffect(() => {
     if (!foto?.startsWith('blob:')) return;
@@ -382,6 +393,41 @@ export default function LaporPage() {
                     Lokasi Saya
                   </button>
                 </div>
+
+                {/* ── Banner Deteksi Laporan Serupa di Sekitar Lokasi (Anti-Duplikasi) ── */}
+                {laporanSerupa.length > 0 && (
+                  <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 space-y-2.5">
+                    <div className="flex items-start gap-2.5">
+                      <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-extrabold text-amber-950">
+                          Terdeteksi {laporanSerupa.length} Aduan Serupa di Radius Sekitar!
+                        </p>
+                        <p className="text-[11px] text-amber-800 leading-relaxed mt-0.5">
+                          Warga lain mungkin sudah melaporkan fasilitas yang sama. Anda dapat mendukung laporan tersebut agar diprioritaskan petugas tanpa perlu membuat tiket ganda.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 pt-1">
+                      {laporanSerupa.map((lap) => (
+                        <div key={lap.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/80 border border-amber-200 text-xs">
+                          <div className="truncate pr-2">
+                            <span className="font-mono font-bold text-navy mr-1.5">#{lap.kode_lacak}</span>
+                            <span className="font-semibold text-navy/80">{lap.judul}</span>
+                          </div>
+                          <Link
+                            href={`/riwayat?kode=${lap.kode_lacak}`}
+                            target="_blank"
+                            className="shrink-0 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 transition"
+                          >
+                            <span>Dukung</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Judul Laporan */}
                 <div>
