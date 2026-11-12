@@ -34,6 +34,18 @@ export interface CatatanTeknis {
   biaya_logistik?: string;
   sumber_dana?: string;
   indeks_kepuasan_wilayah?: number;
+  // Dari status_history (plain string catatan admin)
+  catatan_penanganan?: string;
+  waktu_verifikasi?: string;
+  status_terkini?: string;
+  [key: string]: string | number | undefined;
+}
+
+export interface KonfirmasiWarga {
+  jawaban: 'puas' | 'biasa' | 'kurang_puas';
+  rating: number;
+  komentar?: string | null;
+  created_at: string;
 }
 
 export interface Laporan {
@@ -59,6 +71,7 @@ export interface Laporan {
   dinas_singkatan?: string;
   jumlah_dukungan?: number;
   konfirmasi_jawaban?: string | null;
+  konfirmasi_warga?: KonfirmasiWarga | null;
   catatan_teknis?: CatatanTeknis;
   linimasa?: LinimasaItem[];
   created_at: string;

@@ -266,11 +266,11 @@ export default function Beranda() {
             <div className="absolute right-4 top-4 rounded-xl bg-crimson/10 p-2">
               <svg className="h-4 w-4 text-crimson" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-crimson">Bulan Ini</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-crimson">Total Aduan</span>
             <span className="text-4xl font-black text-navy leading-none">
               <CountUp to={r?.laporan_bulan_ini ?? 0} />
             </span>
-            <span className="text-xs font-semibold text-navy/60">aduan masuk</span>
+            <span className="text-xs font-semibold text-navy/60">aduan nyata masuk</span>
             <div className="mt-1 flex items-end gap-0.5 h-7" aria-hidden="true">
               {trenTerbaru.map((item, i) => (
                 <div key={item.bulan} className="bar-grow flex-1 rounded-t bg-crimson/30 hover:bg-crimson/50 transition-colors" style={{ height: `${Math.max(4, (item.jumlah_masuk / nilaiTrenMaks) * 28)}px`, animationDelay: `${i * 100}ms` }} />

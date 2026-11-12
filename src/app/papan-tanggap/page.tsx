@@ -92,7 +92,7 @@ export default function PapanTanggapPage() {
   }, []);
 
   const metrik = [
-    { label: 'Laporan bulan ini', value: ringkasan?.laporan_bulan_ini, suffix: '' },
+    { label: 'Total Aduan Nyata', value: ringkasan?.laporan_bulan_ini, suffix: '' },
     { label: 'Laporan selesai', value: ringkasan?.laporan_selesai, suffix: '' },
     { label: 'Sedang ditangani', value: ringkasan?.sedang_dikerjakan, suffix: '' },
     { label: 'Tingkat penyelesaian', value: ringkasan?.persentase_selesai, suffix: '%' },

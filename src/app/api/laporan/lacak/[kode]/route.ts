@@ -53,12 +53,22 @@ export async function GET(
       penandaAktif = [...penandaAktif, ...cekKonten.penanda];
     }
 
-    // 3. Ambil linimasa status history
-    const { data: history } = await supabaseAdmin
-      .from('status_history')
-      .select('status_dari, status_ke, catatan, created_at')
-      .eq('laporan_id', laporan.id)
-      .order('created_at', { ascending: true });
+    // 3. Ambil linimasa status history & konfirmasi pelapor
+    const [historyRes, konfirmasiRes] = await Promise.all([
+      supabaseAdmin
+        .from('status_history')
+        .select('status_dari, status_ke, catatan, created_at')
+        .eq('laporan_id', laporan.id)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('konfirmasi_pelapor')
+        .select('jawaban, rating, komentar, created_at')
+        .eq('laporan_id', laporan.id)
+        .maybeSingle(),
+    ]);
+
+    const history = historyRes.data;
+    const konfirmasiWarga = konfirmasiRes.data;
 
     // 4. Hitung SLA
     const createdDate = new Date(laporan.created_at);
@@ -81,12 +91,30 @@ export async function GET(
 
     // Ambil catatan teknis jika laporan sudah diverifikasi / ditindaklanjuti
     const sudahDiverifikasi = laporan.status !== 'masuk';
-    const catatanTeknis = sudahDiverifikasi && laporan.catatan_teknis ? laporan.catatan_teknis : null;
+    // Ambil dari status_history: cari catatan di entry 'sedang_ditangani' atau entry terakhir non-masuk
+    let catatanTeknis: Record<string, string> | null = null;
+    if (sudahDiverifikasi && history && history.length > 0) {
+      const entryVerifikasi = history.find((h) => h.status_ke === 'sedang_ditangani') || history[history.length - 1];
+      if (entryVerifikasi?.catatan && entryVerifikasi.catatan !== 'Laporan baru dibuat oleh warga') {
+        catatanTeknis = {
+          catatan_penanganan: entryVerifikasi.catatan,
+          waktu_verifikasi: new Date(entryVerifikasi.created_at).toLocaleString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          }),
+          status_terkini: laporan.status,
+        };
+      }
+    }
+    // Fallback ke catatan_teknis di laporan jika ada (backward compat)
+    if (!catatanTeknis && sudahDiverifikasi && laporan.catatan_teknis) {
+      catatanTeknis = laporan.catatan_teknis as Record<string, string>;
+    }
 
     return apiSukses({
       laporan: {
         ...laporan,
         penanda: penandaAktif,
+        konfirmasi_warga: konfirmasiWarga || null,
         foto_sebelum_paths: formatBanyakUrlFoto(laporan.foto_sebelum_paths || []),
         foto_sesudah_paths: formatBanyakUrlFoto(laporan.foto_sesudah_paths || []),
       },

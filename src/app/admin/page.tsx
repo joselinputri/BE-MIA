@@ -129,13 +129,14 @@ export default function AdminPage() {
         }
         const mandor = prompt('Masukkan nama Mandor / Penanggung Jawab Lapangan:', 'Bambang Triyono, S.T.');
         const surat = prompt('Masukkan Nomor Surat Tugas:', 'ST-2026-DPUPR-SKA');
-        bodyData.catatan_teknis = {
-          regu_pelaksana: regu || 'Tim Reaksi Cepat Dinas Pengampu',
-          mandor: mandor || 'Petugas Lapangan Berwenang',
-          surat_tugas: surat || 'ST-2026-SURAKARTA',
-          spesifikasi_material: 'Standar Teknis Lapangan SNI',
-          waktu_penugasan: new Date().toLocaleString('id-ID'),
-        };
+        const waktu = new Date().toLocaleString('id-ID');
+        // Susun catatan sebagai string yang akan tersimpan di status_history
+        const bagianCatatan: string[] = [];
+        if (regu) bagianCatatan.push(`Regu: ${regu}`);
+        if (mandor) bagianCatatan.push(`Mandor: ${mandor}`);
+        if (surat) bagianCatatan.push(`Surat Tugas: ${surat}`);
+        bagianCatatan.push(`Waktu Penugasan: ${waktu}`);
+        bodyData.catatan = bagianCatatan.join(' | ');
       } else {
         bodyData.alasan = 'Ditolak oleh admin: Bukan fasilitas publik / spam';
       }

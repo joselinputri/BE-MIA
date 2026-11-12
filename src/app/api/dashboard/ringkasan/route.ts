@@ -46,7 +46,9 @@ export async function GET(req: NextRequest) {
     let totalQuery = supabaseAdmin
       .from('laporan_publik')
       .select('id', { count: 'exact', head: true })
-      .eq('is_simulasi', false);
+      .eq('is_simulasi', false)
+      .gte('created_at', mulaiBulan)
+      .lte('created_at', akhirBulan);
 
     let selesaiQuery = supabaseAdmin
       .from('laporan_publik')

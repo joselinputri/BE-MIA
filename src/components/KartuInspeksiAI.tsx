@@ -1,12 +1,47 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, ShieldAlert, CheckCircle2, ChevronDown, ChevronUp, Bot, ArrowRight } from 'lucide-react';
+import { Sparkles, ShieldAlert, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { type Laporan } from '@/lib/client/data';
 import { cn } from '@/lib/utils';
 
 interface KartuInspeksiAIProps {
   laporan: Laporan;
+}
+
+// ── Fungsi detektor konten gibberish ──────────────────────────────────────────
+function adalahKontenAcak(teks: string): boolean {
+  // Jika ada kata kunci fasilitas publik yang bermakna → bukan gibberish
+  const kataKunciValid =
+    /jalan|aspal|rusak|lubang|lampu|pju|mati|padam|sampah|bau|saluran|drainase|banjir|genangan|pohon|tumbang|rambu|trotoar|fasilitas|jembatan|batu|pecah|kabel|tiang|retak|ambles|amblas|gorong|selokan|pedestrian|marka|halte|taman/i;
+  if (kataKunciValid.test(teks)) return false;
+
+  // Bersihkan patokan wilayah dan tanda baca
+  const bersih = teks
+    .replace(/\[Patokan Wilayah\/Daerah:[^\]]*\]/gi, '')
+    .replace(/[^\w\s]/g, ' ')
+    .trim();
+
+  const kata = bersih
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3);
+
+  if (kata.length === 0) return true;
+
+  let jumlahGibberish = 0;
+  for (const k of kata) {
+    const jumlahVokal = (k.match(/[aeiou]/g) || []).length;
+    const konsonanBeruntun = /[^aeiou\d]{4,}/i.test(k); // 4+ konsonan berturutan
+    const karakterRepetitif = /(.)\1{2,}/.test(k); // karakter berulang 3x+
+    const rasioVokalRendah = jumlahVokal / k.length < 0.2; // hampir tidak ada vokal
+    if (konsonanBeruntun || karakterRepetitif || rasioVokalRendah) {
+      jumlahGibberish++;
+    }
+  }
+
+  // Gibberish jika ≥40% kata terdeteksi acak, atau totalnya ≤ 2 kata bermakna
+  return jumlahGibberish / kata.length >= 0.4 || kata.length <= 2;
 }
 
 export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
@@ -24,9 +59,10 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
     ) ||
     /wa\.me\//i.test(gabunganTeks);
 
-  // Evaluasi kejelasan konten (apakah teks hanya asal ketik / spam huruf acak)
-  const hanyaHurufAcak = /^[a-z\s.,\-_]{1,30}$/i.test(judul) && !/\s/.test(judul.trim()) && judul.length > 5;
-  const teksSangatPendek = (judul.length + deskripsi.length) < 25;
+  // Evaluasi konten gibberish menggunakan detektor robust
+  const kontenAcak = !adaIndikasiSpam && adalahKontenAcak(gabunganTeks);
+
+  // Fallback evaluasi lama (untuk backward compat)
   const kataBermakna = /jalan|aspal|rusak|lubang|lampu|pju|mati|sampah|bau|saluran|drainase|banjir|pohon|rambu|trotoar|fasilitas/i.test(gabunganTeks);
 
   // Klasifikasi dinas pengampu otomatis berdasarkan konten / kategori laporan
@@ -49,8 +85,12 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
   if (adaIndikasiSpam) {
     skorKelayakan = 24;
     urgensi = 'Rendah (Ditandai Anomali / Spam)';
-  } else if (!kataBermakna && (teksSangatPendek || hanyaHurufAcak)) {
-    skorKelayakan = 35;
+  } else if (kontenAcak) {
+    // Konten gibberish terdeteksi oleh detektor rasio vokal/konsonan
+    skorKelayakan = 32;
+    urgensi = 'Rendah (Konten Tidak Jelas)';
+  } else if (!kataBermakna) {
+    skorKelayakan = 45;
     urgensi = 'Rendah (Deskripsi Kurang Jelas)';
   } else if (/ambruk|putus|longsor|tergenang banjir|korban|darurat/i.test(gabunganTeks)) {
     skorKelayakan = 98;
@@ -118,12 +158,16 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
           <span
             className={cn(
               'text-xs font-extrabold mt-1 inline-flex items-center gap-1',
-              adaIndikasiSpam ? 'text-crimson' : 'text-emerald-700'
+              adaIndikasiSpam || kontenAcak ? 'text-crimson' : 'text-emerald-700'
             )}
           >
             {adaIndikasiSpam ? (
               <>
                 <ShieldAlert className="w-3.5 h-3.5" /> Perlu Review Manual
+              </>
+            ) : kontenAcak ? (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5" /> Konten Tidak Jelas
               </>
             ) : (
               <>
@@ -149,6 +193,8 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
             <p className="bg-white/90 p-2.5 rounded-lg border border-navy/10 text-[11px] leading-relaxed">
               {adaIndikasiSpam
                 ? 'Terdeteksi pola kata kunci promosi, penawaran jasa, atau komersial non-aduan infrastruktur. Sistem otomatis menahan status untuk ditinjau oleh operator dinas dan tidak menghapus data secara otomatis (prinsip Human-in-the-Loop).'
+                : kontenAcak
+                ? 'Deskripsi terdeteksi tidak mengandung kata bermakna tentang fasilitas publik. Judul atau isi laporan terdiri dari karakter acak / teks tidak jelas. Mohon pelapor melengkapi keterangan dengan lokasi dan jenis kerusakan yang spesifik.'
                 : 'Laporan memenuhi kaidah aduan fasilitas kota dengan deskripsi lokasi dan visual yang memadai. Waktu respon optimal ditargetkan dalam SLA 3x24 jam kerja.'}
             </p>
           </div>

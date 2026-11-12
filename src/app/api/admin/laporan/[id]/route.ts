@@ -115,11 +115,23 @@ export async function PATCH(
         return apiError('INTERNAL_ERROR', `Gagal mengubah status laporan: ${errUpd.message}`);
       }
 
+      // Susun catatan teknis dari data body yang dikirim admin
+      const catatanTeknis = body.catatan_teknis;
+      let catatanStr = 'Laporan telah diverifikasi oleh Administrator dan dialokasikan regu penanganan.';
+      if (catatanTeknis) {
+        const bagian: string[] = [];
+        if (catatanTeknis.regu_pelaksana) bagian.push(`Regu: ${catatanTeknis.regu_pelaksana}`);
+        if (catatanTeknis.mandor) bagian.push(`Mandor: ${catatanTeknis.mandor}`);
+        if (catatanTeknis.surat_tugas) bagian.push(`Surat Tugas: ${catatanTeknis.surat_tugas}`);
+        if (catatanTeknis.waktu_penugasan) bagian.push(`Waktu: ${catatanTeknis.waktu_penugasan}`);
+        if (bagian.length > 0) catatanStr = bagian.join(' | ');
+      }
+
       await supabaseAdmin.from('status_history').insert({
         laporan_id: laporanId,
         status_dari: 'masuk',
         status_ke: 'sedang_ditangani',
-        catatan: body.catatan || 'Laporan telah diverifikasi oleh Administrator dan dialokasikan regu penanganan.',
+        catatan: body.catatan || catatanStr,
       });
 
       return apiSukses({ pesan: 'Laporan telah diverifikasi sah dan penanganan sedang berjalan.' });

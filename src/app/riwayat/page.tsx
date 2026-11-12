@@ -223,6 +223,14 @@ function RiwayatContent() {
       setJumlahDukungan(laporan?.jumlah_dukungan || 0);
       setSudahDukung(false);
       setKonfirmasiStatus('idle');
+      if (laporan?.konfirmasi_warga?.rating) {
+        setRating(laporan.konfirmasi_warga.rating);
+      }
+      if (laporan?.konfirmasi_warga?.komentar) {
+        setKomentarUlasan(laporan.konfirmasi_warga.komentar);
+      } else {
+        setKomentarUlasan('');
+      }
     });
     return () => {
       aktif = false;
@@ -275,6 +283,10 @@ function RiwayatContent() {
     );
     if (result.ok) {
       setKonfirmasiStatus(status);
+      const updated = await lacak(activeKode);
+      if (updated) {
+        setActiveTicket(updated);
+      }
     } else {
       setAksiNotice(result.pesan);
     }
@@ -840,13 +852,28 @@ function RiwayatContent() {
                       </div>
                     ))}
                   </dl>
+                ) : currentLap?.linimasa && currentLap.linimasa.some(
+                    (l) => l.status_ke === 'sedang_ditangani' && l.catatan && l.catatan !== 'Regu Reaksi Cepat melakukan tindakan fisik di lokasi'
+                  ) ? (
+                  <dl className="grid gap-2 text-xs text-navy/80">
+                    {currentLap.linimasa
+                      .filter((l) => l.status_ke === 'sedang_ditangani' && l.catatan && l.catatan !== 'Regu Reaksi Cepat melakukan tindakan fisik di lokasi')
+                      .map((l, i) => (
+                        <div key={i}>
+                          <dt className="font-bold">Catatan Verifikasi Admin</dt>
+                          <dd className="mt-0.5 text-navy/80 leading-relaxed">{l.catatan}</dd>
+                          <dd className="text-[11px] text-navy/50 mt-0.5">{new Date(l.created_at).toLocaleString('id-ID')}</dd>
+                        </div>
+                      ))
+                    }
+                  </dl>
                 ) : (
                   <p className="text-xs text-navy/70">Belum ada catatan penanganan yang tersimpan.</p>
                 )}
               </div>
 
-              {/* ── Kuesioner Audit Gotong Royong (Khusus Warga Pelapor saat status Selesai) ── */}
-              {currentLap?.status === 'selesai' && !isPetugasOrAdmin && (
+              {/* ── Kuesioner Audit Gotong Royong (Khusus Warga Pelapor saat status Selesai dan belum mengisi konfirmasi) ── */}
+              {currentLap?.status === 'selesai' && !isPetugasOrAdmin && !currentLap?.konfirmasi_warga && (
                 <div className="bg-white p-5 rounded-2xl border-2 border-crimson/20 shadow-sm space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-crimson/10 text-crimson rounded-xl shrink-0 mt-0.5">
@@ -890,15 +917,18 @@ function RiwayatContent() {
 
                       <div className="space-y-1.5">
                         <label className="block text-[11px] font-bold text-navy">
-                          Suara Warga / Testimoni Layanan (Opsional):
+                          Suara Warga / Testimoni Layanan & Catatan Evaluasi:
                         </label>
-                        <input
-                          type="text"
+                        <textarea
+                          rows={3}
                           value={komentarUlasan}
                           onChange={(e) => setKomentarUlasan(e.target.value)}
-                          placeholder="Tuliskan ulasan langsung Anda mengenai hasil perbaikan di lokasi..."
-                          className="w-full rounded-xl border border-navy/15 px-3 py-2 text-xs text-navy focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                          placeholder="Tuliskan ulasan langsung Anda mengenai hasil perbaikan di lokasi, kerapian pengerjaan, atau masukan untuk dinas pengampu..."
+                          className="w-full rounded-xl border border-navy/15 p-3 text-xs text-navy focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white leading-relaxed resize-none"
                         />
+                        <p className="text-[10px] text-navy/50">
+                          Ulasan warga akan ditampilkan transparan pada Papan Tanggap dan evaluasi kinerja dinas.
+                        </p>
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-3">
@@ -944,19 +974,51 @@ function RiwayatContent() {
               )}
 
               {/* Tampilan Konfirmasi yang Sudah Diberikan (Read-only untuk Publik / Petugas / Admin) */}
-              {currentLap?.status === 'selesai' && isPetugasOrAdmin && (
-                <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <div>
-                      <p className="text-xs font-bold text-emerald-950">
-                        Penanganan Telah Selesai
-                      </p>
-                      <p className="text-[11px] text-emerald-800">
-                        Penilaian kualitas layanan fasilitas publik dievaluasi langsung oleh warga pelapor.
-                      </p>
+              {currentLap?.status === 'selesai' && (isPetugasOrAdmin || currentLap?.konfirmasi_warga) && (
+                <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-emerald-950">
+                          {currentLap?.konfirmasi_warga ? 'Ulasan & Konfirmasi Gotong Royong Warga' : 'Penanganan Telah Selesai'}
+                        </p>
+                        <p className="text-[11px] text-emerald-800">
+                          {currentLap?.konfirmasi_warga
+                            ? 'Pelapor telah memvalidasi hasil pekerjaan di lapangan secara langsung.'
+                            : 'Penilaian kualitas layanan fasilitas publik dievaluasi langsung oleh warga pelapor.'}
+                        </p>
+                      </div>
                     </div>
+
+                    {currentLap?.konfirmasi_warga && (
+                      <div className="flex items-center gap-1 bg-white/80 px-2.5 py-1 rounded-xl border border-emerald-200">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={cn(
+                              'w-3.5 h-3.5',
+                              star <= (currentLap.konfirmasi_warga?.rating || 5)
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-navy/20'
+                            )}
+                          />
+                        ))}
+                        <span className="text-[11px] font-extrabold text-navy ml-1">
+                          {currentLap.konfirmasi_warga.rating}/5
+                        </span>
+                      </div>
+                    )}
                   </div>
+
+                  {currentLap?.konfirmasi_warga?.komentar && (
+                    <div className="bg-white/90 p-3 rounded-xl border border-emerald-100 text-xs text-navy/90 mt-2">
+                      <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1">
+                        Komentar / Ulasan Warga:
+                      </p>
+                      <p className="italic leading-relaxed">&ldquo;{currentLap.konfirmasi_warga.komentar}&rdquo;</p>
+                    </div>
+                  )}
                 </div>
               )}
 
