@@ -59,6 +59,7 @@ function RiwayatContent() {
   const [filterStatus, setFilterStatus] = useState<string>('Semua');
   const [rating, setRating] = useState<number>(5);
   const [komentarUlasan, setKomentarUlasan] = useState<string>('');
+  const [modeEditUlasan, setModeEditUlasan] = useState<boolean>(false);
   const [konfirmasiStatus, setKonfirmasiStatus] = useState<'idle' | 'selesai' | 'revisi'>('idle');
   const [jumlahDukungan, setJumlahDukungan] = useState<number>(0);
   const [sudahDukung, setSudahDukung] = useState<boolean>(false);
@@ -223,6 +224,7 @@ function RiwayatContent() {
       setJumlahDukungan(laporan?.jumlah_dukungan || 0);
       setSudahDukung(false);
       setKonfirmasiStatus('idle');
+      setModeEditUlasan(false);
       if (laporan?.konfirmasi_warga?.rating) {
         setRating(laporan.konfirmasi_warga.rating);
       }
@@ -283,6 +285,7 @@ function RiwayatContent() {
     );
     if (result.ok) {
       setKonfirmasiStatus(status);
+      setModeEditUlasan(false);
       const updated = await lacak(activeKode);
       if (updated) {
         setActiveTicket(updated);
@@ -872,21 +875,32 @@ function RiwayatContent() {
                 )}
               </div>
 
-              {/* ── Kuesioner Audit Gotong Royong (Khusus Warga Pelapor saat status Selesai dan belum mengisi konfirmasi) ── */}
-              {currentLap?.status === 'selesai' && !isPetugasOrAdmin && !currentLap?.konfirmasi_warga && (
+              {/* ── Kuesioner Audit Gotong Royong (Khusus Warga Pelapor saat status Selesai) ── */}
+              {currentLap?.status === 'selesai' && !isPetugasOrAdmin && (!currentLap?.konfirmasi_warga || modeEditUlasan) && (
                 <div className="bg-white p-5 rounded-2xl border-2 border-crimson/20 shadow-sm space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-crimson/10 text-crimson rounded-xl shrink-0 mt-0.5">
-                      <AlertCircle className="w-5 h-5" />
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-crimson/10 text-crimson rounded-xl shrink-0 mt-0.5">
+                        <AlertCircle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-navy">
+                          {currentLap?.konfirmasi_warga ? 'Perbarui Ulasan & Penilaian Layanan' : 'Apakah laporan ini sudah benar-benar beres?'}
+                        </h3>
+                        <p className="text-xs text-navy/70 mt-0.5 leading-relaxed">
+                          Sebagai warga pelapor, Anda berhak memverifikasi langsung hasil pengerjaan di lapangan dan memberikan suara ulasan.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold text-navy">
-                        Apakah laporan ini sudah benar-benar beres?
-                      </h3>
-                      <p className="text-xs text-navy/70 mt-0.5 leading-relaxed">
-                        Sebagai warga pelapor, Anda berhak memverifikasi langsung hasil pengerjaan di lapangan.
-                      </p>
-                    </div>
+                    {modeEditUlasan && (
+                      <button
+                        type="button"
+                        onClick={() => setModeEditUlasan(false)}
+                        className="text-xs font-bold text-navy/60 hover:text-navy underline"
+                      >
+                        Batal Edit
+                      </button>
+                    )}
                   </div>
 
                   {konfirmasiStatus === 'idle' ? (
@@ -973,8 +987,8 @@ function RiwayatContent() {
                 </div>
               )}
 
-              {/* Tampilan Konfirmasi yang Sudah Diberikan (Read-only untuk Publik / Petugas / Admin) */}
-              {currentLap?.status === 'selesai' && (isPetugasOrAdmin || currentLap?.konfirmasi_warga) && (
+              {/* Tampilan Konfirmasi yang Sudah Diberikan (Untuk Petugas / Admin atau Warga saat tidak dalam mode edit) */}
+              {currentLap?.status === 'selesai' && !modeEditUlasan && (isPetugasOrAdmin || currentLap?.konfirmasi_warga) && (
                 <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-2">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2.5">
@@ -991,34 +1005,65 @@ function RiwayatContent() {
                       </div>
                     </div>
 
-                    {currentLap?.konfirmasi_warga && (
-                      <div className="flex items-center gap-1 bg-white/80 px-2.5 py-1 rounded-xl border border-emerald-200">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={cn(
-                              'w-3.5 h-3.5',
-                              star <= (currentLap.konfirmasi_warga?.rating || 5)
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-navy/20'
-                            )}
-                          />
-                        ))}
-                        <span className="text-[11px] font-extrabold text-navy ml-1">
-                          {currentLap.konfirmasi_warga.rating}/5
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {currentLap?.konfirmasi_warga && (
+                        <div className="flex items-center gap-1 bg-white/80 px-2.5 py-1 rounded-xl border border-emerald-200">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={cn(
+                                'w-3.5 h-3.5',
+                                star <= (currentLap.konfirmasi_warga?.rating || 5)
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-navy/20'
+                              )}
+                            />
+                          ))}
+                          <span className="text-[11px] font-extrabold text-navy ml-1">
+                            {currentLap.konfirmasi_warga.rating}/5
+                          </span>
+                        </div>
+                      )}
+
+                      {!isPetugasOrAdmin && currentLap?.konfirmasi_warga && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRating(currentLap.konfirmasi_warga?.rating || 5);
+                            setKomentarUlasan(currentLap.konfirmasi_warga?.komentar || '');
+                            setModeEditUlasan(true);
+                          }}
+                          className="px-3 py-1 bg-white hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg border border-emerald-300 transition"
+                        >
+                          {currentLap.konfirmasi_warga?.komentar ? 'Ubah Komentar' : '+ Tambah Komentar Warga'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {currentLap?.konfirmasi_warga?.komentar && (
+                  {currentLap?.konfirmasi_warga?.komentar ? (
                     <div className="bg-white/90 p-3 rounded-xl border border-emerald-100 text-xs text-navy/90 mt-2">
                       <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1">
                         Komentar / Ulasan Warga:
                       </p>
                       <p className="italic leading-relaxed">&ldquo;{currentLap.konfirmasi_warga.komentar}&rdquo;</p>
                     </div>
-                  )}
+                  ) : !isPetugasOrAdmin ? (
+                    <div className="bg-white/80 p-3 rounded-xl border border-dashed border-emerald-300 text-xs text-navy/70 mt-2 flex items-center justify-between gap-2">
+                      <span className="italic text-[11px]">Belum ada catatan/komentar ulasan yang disertakan pada rating ini.</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRating(currentLap.konfirmasi_warga?.rating || 5);
+                          setKomentarUlasan('');
+                          setModeEditUlasan(true);
+                        }}
+                        className="text-[11px] font-extrabold text-emerald-800 hover:underline shrink-0"
+                      >
+                        Tuliskan Komentar Sekarang &rarr;
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               )}
 
