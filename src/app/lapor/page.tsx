@@ -78,6 +78,7 @@ export default function LaporPage() {
   const [latitude, setLatitude] = useState(PUSAT_SURAKARTA[0]);
   const [longitude, setLongitude] = useState(PUSAT_SURAKARTA[1]);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [patokanLokasi, setPatokanLokasi] = useState('');
   const [deskripsi, setDeskripsi] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
@@ -216,9 +217,13 @@ export default function LaporPage() {
 
     setIsSubmitting(true);
 
+    const deskripsiLengkap = patokanLokasi.trim()
+      ? `[Patokan Wilayah/Daerah: ${patokanLokasi.trim()}]\n\n${deskripsi.trim()}`
+      : deskripsi.trim();
+
     const res = await kirimLaporan({
       judul: judul.trim(),
-      deskripsi: deskripsi.trim(),
+      deskripsi: deskripsiLengkap,
       kategori_slug: kategori,
       latitude,
       longitude,
@@ -297,19 +302,19 @@ export default function LaporPage() {
             <div className="space-y-10">
               {/* Badge Akun Pelapor Terverifikasi */}
               {pengguna && (
-                <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-navy font-medium shadow-sm">
-                  <div className="flex items-center gap-2.5">
-                    <span className="p-1.5 bg-emerald-600 text-white rounded-xl shadow-xs">
-                      <UserCheck className="size-4" />
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white/95 border-2 border-emerald-500/40 rounded-2xl text-xs text-navy font-medium shadow-md">
+                  <div className="flex items-center gap-3">
+                    <span className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                      <UserCheck className="size-5" />
                     </span>
                     <div>
-                      <span className="text-[11px] text-navy/60 block">Akun Pelapor Terverifikasi:</span>
-                      <strong className="text-navy font-bold text-sm">{pengguna.nama}</strong>{' '}
-                      <span className="text-navy/60">({pengguna.email})</span>
+                      <span className="text-[11px] text-navy/70 font-semibold block">Akun Pelapor Terverifikasi:</span>
+                      <strong className="text-navy font-extrabold text-sm sm:text-base">{pengguna.nama}</strong>{' '}
+                      <span className="text-navy/60 font-medium">({pengguna.email})</span>
                     </div>
                   </div>
                   {pengguna.peran === 'admin' && (
-                    <span className="px-3 py-1 rounded-lg bg-emerald-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider">
+                    <span className="px-3 py-1.5 rounded-xl bg-emerald-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider shadow-xs">
                       Hak Akses: Administrator
                     </span>
                   )}
@@ -430,6 +435,24 @@ export default function LaporPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Patokan Wilayah / Daerah Spesifik */}
+                <div>
+                  <label htmlFor="patokan" className="text-xs font-extrabold text-navy uppercase tracking-wider block mb-1.5">
+                    Patokan Wilayah / Nama Jalan / Gang (Spesifik)
+                  </label>
+                  <input
+                    id="patokan"
+                    type="text"
+                    value={patokanLokasi}
+                    onChange={(e) => setPatokanLokasi(e.target.value)}
+                    placeholder="Contoh: Jl. Slamet Riyadi No. 45, depan Toko Roti Wonder, Laweyan"
+                    className="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-navy border border-navy/15 focus:outline-none focus:ring-2 focus:ring-crimson"
+                  />
+                  <p className="text-[11px] text-navy/60 mt-1">
+                    Bantu tim lapangan menemukan titik kerusakan dengan cepat tanpa tersesat.
+                  </p>
+                </div>
 
                 {/* Judul Laporan */}
                 <div>

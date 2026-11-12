@@ -283,19 +283,32 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3 font-medium">{lap.kecamatan || '—'}</td>
                           <td className="px-4 py-3">
-                            {isSpam ? (
+                            {lap.status === 'ditolak' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-100 text-crimson font-bold border border-rose-300">
+                                Ditolak (Spam / Non-Fasilitas)
+                              </span>
+                            ) : lap.status === 'sedang_ditangani' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
+                                Sedang Ditangani (Terverifikasi)
+                              </span>
+                            ) : lap.status === 'selesai' ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+                                Selesai
+                              </span>
+                            ) : isSpam ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold border border-rose-200">
                                 Terindikasi Spam / Ilegal
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-navy/70 font-semibold">
-                                Normal ({lap.status})
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold border border-blue-200">
+                                Baru Masuk (Perlu Verifikasi)
                               </span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {lap.status === 'masuk' || isSpam ? (
+                              {/* Hanya tampilkan tombol Verifikasi jika status masih MASUK dan bukan ditolak */}
+                              {lap.status === 'masuk' && (
                                 <button
                                   type="button"
                                   disabled={sedangMemprosesId === lap.id}
@@ -306,8 +319,10 @@ export default function AdminPage() {
                                   <CheckCircle className="size-3.5" />
                                   <span>Verifikasi & Tugaskan</span>
                                 </button>
-                              ) : null}
-                              {lap.status !== 'ditolak' && (
+                              )}
+
+                              {/* Tombol Tolak hanya jika belum ditolak dan belum selesai/diproses */}
+                              {lap.status === 'masuk' && (
                                 <button
                                   type="button"
                                   disabled={sedangMemprosesId === lap.id}
@@ -319,6 +334,15 @@ export default function AdminPage() {
                                   <span>Tolak</span>
                                 </button>
                               )}
+
+                              {/* Jika sudah diproses, beri indikator label */}
+                              {lap.status === 'sedang_ditangani' && (
+                                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
+                                  Sedang Berjalan
+                                </span>
+                              )}
+
+                              {/* Tombol Hapus selalu tersedia untuk admin membersihkan DB */}
                               <button
                                 type="button"
                                 disabled={sedangMemprosesId === lap.id}
@@ -327,7 +351,7 @@ export default function AdminPage() {
                                 title="Hapus laporan dari database"
                               >
                                 <Trash2 className="size-3.5" />
-                                <span>Hapus Laporan</span>
+                                <span>Hapus</span>
                               </button>
                             </div>
                           </td>

@@ -618,7 +618,9 @@ export default function Beranda() {
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-white">Rasio Buka Ulang (Reopen):</span>
                 <span className="font-mono font-bold text-amber-300">
-                  {dash?.konfirmasi?.persen_dibuka_ulang ? `${dash.konfirmasi.persen_dibuka_ulang}%` : '2.7%'}
+                  {dash?.konfirmasi?.persen_dibuka_ulang != null
+                    ? `${Number(dash.konfirmasi.persen_dibuka_ulang).toFixed(1)}%`
+                    : '2.7%'}
                 </span>
               </div>
               <p className="text-[10px] text-white/50">

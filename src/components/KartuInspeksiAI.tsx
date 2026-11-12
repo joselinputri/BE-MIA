@@ -19,10 +19,22 @@ export default function KartuInspeksiAI({ laporan }: KartuInspeksiAIProps) {
       gabunganTeks
     );
 
-  // Perhitungan skor kelayakan cerdas
+  // Klasifikasi dinas pengampu otomatis berdasarkan konten / kategori laporan
+  let dinasTerkait = laporan.dinas;
+  if (!dinasTerkait || dinasTerkait === 'Dinas Terkait') {
+    if (/lampu|pju|rambu|lalu lintas|marka|halte|trotoar jalan raya|dishub/i.test(gabunganTeks)) {
+      dinasTerkait = 'Dinas Perhubungan (Dishub)';
+    } else if (/sampah|kebersihan|pohon|taman|limbah|dlh/i.test(gabunganTeks)) {
+      dinasTerkait = 'Dinas Lingkungan Hidup (DLH)';
+    } else if (/tertib|reklame liar|pkl liar|okupasi|satpol/i.test(gabunganTeks)) {
+      dinasTerkait = 'Satuan Polisi Pamong Praja (Satpol PP)';
+    } else {
+      dinasTerkait = 'Dinas Pekerjaan Umum & Penataan Ruang (DPUPR)';
+    }
+  }
+
   let skorKelayakan = 94;
   let urgensi = 'Sedang';
-  let dinasTerkait = laporan.dinas || 'Dinas Pekerjaan Umum & Penataan Ruang (DPUPR)';
 
   if (adaIndikasiSpam) {
     skorKelayakan = 24;
