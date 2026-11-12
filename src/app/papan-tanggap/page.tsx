@@ -135,64 +135,109 @@ export default function PapanTanggapPage() {
               <p className="mt-6 text-sm text-navy/60">
                 {loading ? 'Memuat konfirmasi…' : 'Data konfirmasi tidak tersedia karena data gagal dimuat.'}
               </p>
-            ) : (
-              <>
-                <dl className="mt-6 grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-white/80 p-4">
-                    <dt className="text-xs font-bold text-navy/60">Laporan selesai</dt>
-                    <dd className="mt-1 text-2xl font-extrabold text-navy">
-                      {formatAngka(dashboard.konfirmasi.total_selesai)}
-                    </dd>
-                  </div>
-                  <div className="rounded-2xl bg-white/80 p-4">
-                    <dt className="text-xs font-bold text-navy/60">Sudah dikonfirmasi</dt>
-                    <dd className="mt-1 text-2xl font-extrabold text-navy">
-                      {formatAngka(dashboard.konfirmasi.total_dikonfirmasi)}
-                    </dd>
-                  </div>
-                </dl>
+            ) : (() => {
+              const k = dashboard.konfirmasi;
+              const rasio = k.total_selesai > 0 ? Math.round((k.total_dikonfirmasi / k.total_selesai) * 100) : 0;
+              const circumference = 2 * Math.PI * 40;
+              const strokeDash = (rasio / 100) * circumference;
 
-                {/* Distribusi Kepuasan — horizontal bar chart */}
-                <div className="mt-5 space-y-3 rounded-2xl bg-white/80 p-4">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-navy/70">Distribusi Kepuasan Warga</h3>
-                  {[
-                    { label: 'Puas', persen: dashboard.konfirmasi.persen_puas, warna: 'bg-emerald-500' },
-                    { label: 'Biasa', persen: dashboard.konfirmasi.persen_biasa, warna: 'bg-amber-400' },
-                    { label: 'Kurang Puas', persen: dashboard.konfirmasi.persen_kurang_puas, warna: 'bg-rose-500' },
-                  ].map((item) => (
-                    <div key={item.label} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-navy">{item.label}</span>
-                        <span className="font-extrabold text-navy">{formatAngka(item.persen)}%</span>
-                      </div>
-                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-navy/10">
-                        <div
-                          className={`h-full rounded-full ${item.warna} transition-all duration-700`}
-                          style={{ width: `${Math.max(2, item.persen)}%` }}
+              return (
+                <div className="mt-5 space-y-4">
+                  {/* Row 1: Stat cards + donut */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-2xl bg-white/80 p-4">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-navy/50">Selesai</dt>
+                      <dd className="mt-1 text-2xl font-black text-navy">{formatAngka(k.total_selesai)}</dd>
+                      <p className="text-[10px] text-navy/50 font-semibold mt-0.5">laporan tuntas</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/80 p-4">
+                      <dt className="text-[10px] font-bold uppercase tracking-wider text-navy/50">Dikonfirmasi</dt>
+                      <dd className="mt-1 text-2xl font-black text-emerald-700">{formatAngka(k.total_dikonfirmasi)}</dd>
+                      <p className="text-[10px] text-navy/50 font-semibold mt-0.5">warga merespons</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/80 p-4 flex flex-col items-center justify-center">
+                      <svg width="70" height="70" viewBox="0 0 100 100" className="shrink-0">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                        <circle
+                          cx="50" cy="50" r="40" fill="none" stroke="#059669" strokeWidth="8"
+                          strokeDasharray={`${strokeDash} ${circumference}`}
+                          strokeLinecap="round"
+                          transform="rotate(-90 50 50)"
+                          className="transition-all duration-700"
                         />
-                      </div>
+                        <text x="50" y="54" textAnchor="middle" className="text-sm font-black fill-navy">{rasio}%</text>
+                      </svg>
+                      <p className="text-[10px] font-bold text-navy/50 mt-1">Rasio Konfirmasi</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                {/* Dibuka ulang */}
-                {dashboard.konfirmasi.total_dibuka_ulang > 0 && (
-                  <div className="mt-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
-                    <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/20">
-                      <svg className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-extrabold text-amber-800">
-                        {formatAngka(dashboard.konfirmasi.total_dibuka_ulang)} laporan dibuka ulang
+                  {/* Row 2: Distribusi Kepuasan */}
+                  <div className="space-y-3 rounded-2xl bg-white/80 p-4">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-navy/70">Distribusi Kepuasan Warga</h3>
+                    {[
+                      { label: 'Puas', persen: k.persen_puas, warna: 'bg-emerald-500', dotWarna: 'bg-emerald-500' },
+                      { label: 'Biasa', persen: k.persen_biasa, warna: 'bg-amber-400', dotWarna: 'bg-amber-400' },
+                      { label: 'Kurang Puas', persen: k.persen_kurang_puas, warna: 'bg-rose-500', dotWarna: 'bg-rose-500' },
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-navy flex items-center gap-1.5">
+                            <span className={`inline-block size-2 rounded-full ${item.dotWarna}`} />
+                            {item.label}
+                          </span>
+                          <span className="font-extrabold text-navy">{formatAngka(item.persen)}%</span>
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-navy/8">
+                          <div
+                            className={`h-full rounded-full ${item.warna} transition-all duration-700`}
+                            style={{ width: `${Math.max(2, item.persen)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Row 3: Indeks Kepuasan & Rata-rata Waktu */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-4 border border-emerald-200/50">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70">Indeks Kepuasan</p>
+                      <p className="mt-1 text-3xl font-black text-emerald-700">
+                        {formatAngka(k.persen_puas + k.persen_biasa * 0.5)}<span className="text-base font-bold">/100</span>
                       </p>
-                      <p className="text-[10px] text-amber-700/80">
-                        ({formatAngka(dashboard.konfirmasi.persen_dibuka_ulang)}% dari total selesai) — warga menilai penanganan belum tuntas.
+                      <p className="text-[10px] text-emerald-700/60 font-semibold mt-0.5">
+                        {k.persen_puas + k.persen_biasa * 0.5 >= 70 ? 'Baik' : k.persen_puas + k.persen_biasa * 0.5 >= 50 ? 'Cukup' : 'Perlu Perbaikan'}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 border border-indigo-200/50">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700/70">Tingkat Respons</p>
+                      <p className="mt-1 text-3xl font-black text-indigo-700">
+                        {rasio}<span className="text-base font-bold">%</span>
+                      </p>
+                      <p className="text-[10px] text-indigo-700/60 font-semibold mt-0.5">
+                        warga aktif merespons
                       </p>
                     </div>
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Row 4: Dibuka ulang */}
+                  {k.total_dibuka_ulang > 0 && (
+                    <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+                      <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-500/20">
+                        <svg className="h-4 w-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-xs font-extrabold text-amber-800">
+                          {formatAngka(k.total_dibuka_ulang)} laporan dibuka ulang
+                        </p>
+                        <p className="text-[10px] text-amber-700/80">
+                          ({formatAngka(k.persen_dibuka_ulang)}% dari total selesai) — warga menilai penanganan belum tuntas.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </section>
       </Reveal>

@@ -161,7 +161,7 @@ export default function Beranda() {
           aria-label="Hero"
           className="bg-hero text-navy relative overflow-hidden rounded-3xl px-6 py-12 shadow-lg sm:px-10 sm:py-16 md:py-20"
         >
-          <HeroScene3D />
+          <GearHero />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="max-w-xl">
               <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">
