@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { UserPlus, User, Mail, Key, ShieldAlert, Check } from 'lucide-react';
+import { UserPlus, User, Mail, Key, ShieldAlert, Check, Eye, EyeOff } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { useAuth } from '@/lib/client/auth';
 
@@ -13,6 +13,7 @@ export default function DaftarPage() {
   const [nama, setNama] = useState('');
   const [email, setEmail] = useState('');
   const [sandi, setSandi] = useState('');
+  const [lihatSandi, setLihatSandi] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [perluKonfirmasiEmail, setPerluKonfirmasiEmail] = useState(false);
@@ -105,15 +106,23 @@ export default function DaftarPage() {
                   <Key className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy/40" />
                   <input
                     id="password"
-                    type="password"
+                    type={lihatSandi ? 'text' : 'password'}
                     required
                     minLength={8}
                     autoComplete="new-password"
                     value={sandi}
                     onChange={(event) => setSandi(event.target.value)}
                     placeholder="Minimal 8 karakter"
-                    className="w-full rounded-xl border border-navy/15 bg-white py-2.5 pl-10 pr-4 text-sm font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-crimson"
+                    className="w-full rounded-xl border border-navy/15 bg-white py-2.5 pl-10 pr-11 text-sm font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-crimson"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setLihatSandi(!lihatSandi)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-navy/40 hover:text-navy transition p-1"
+                    title={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  >
+                    {lihatSandi ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

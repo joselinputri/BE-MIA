@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Key, Mail, ShieldAlert } from 'lucide-react';
+import { LogIn, Key, Mail, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/lib/client/auth';
 import Reveal from '@/components/Reveal';
 
@@ -12,6 +12,7 @@ export default function MasukPage() {
   const { masuk, siap } = useAuth();
   const [email, setEmail] = useState('');
   const [sandi, setSandi] = useState('');
+  const [lihatSandi, setLihatSandi] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,18 +71,31 @@ export default function MasukPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-navy mb-1.5">Kata Sandi</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-navy">Kata Sandi</label>
+                <Link href="/lupa-sandi" className="text-[11px] font-bold text-crimson hover:underline">
+                  Lupa kata sandi?
+                </Link>
+              </div>
               <div className="relative">
                 <Key className="w-4 h-4 text-navy/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={lihatSandi ? 'text' : 'password'}
                   required
                   autoComplete="current-password"
                   value={sandi}
                   onChange={(e) => setSandi(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-navy/15 rounded-xl text-sm font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-crimson"
+                  className="w-full pl-10 pr-11 py-2.5 bg-white border border-navy/15 rounded-xl text-sm font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-crimson"
                 />
+                <button
+                  type="button"
+                  onClick={() => setLihatSandi(!lihatSandi)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-navy/40 hover:text-navy transition p-1"
+                  title={lihatSandi ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                >
+                  {lihatSandi ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
