@@ -23,6 +23,17 @@ interface SebaranItem {
   tuntas?: number;
 }
 
+interface WaktuPenangananItem {
+  kategori: string;
+  kategori_slug: string;
+  dinas: string;
+  dinas_singkatan: string;
+  median_hari: number;
+  rata_rata_hari: number;
+  jumlah_selesai: number;
+  jumlah_terlambat: number;
+}
+
 function formatAngka(value: number) {
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
 }
@@ -38,6 +49,7 @@ export default function PapanTanggapPage() {
     { nama: 'Pasar Kliwon', penduduk: '86.420', persentase: '89%' },
     { nama: 'Serengan', penduduk: '54.646', persentase: '96%' },
   ]);
+  const [waktuPenangananList, setWaktuPenangananList] = useState<WaktuPenangananItem[]>([]);
 
   const dashData: Dashboard = dashboard || (dashboardMock as unknown as Dashboard);
   const ringkasan = dashData.ringkasan;
@@ -62,6 +74,15 @@ export default function PapanTanggapPage() {
       .then((j) => {
         if (j.data && Array.isArray(j.data) && j.data.length > 0) {
           setSebaranList(j.data);
+        }
+      })
+      .catch(() => {});
+
+    fetchAuthed('/api/dashboard/waktu-penanganan')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.data && Array.isArray(j.data) && j.data.length > 0) {
+          setWaktuPenangananList(j.data);
         }
       })
       .catch(() => {});
@@ -145,53 +166,91 @@ export default function PapanTanggapPage() {
       </Reveal>
 
       <Reveal delay={140}>
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm">
-            <h2 className="text-lg font-extrabold text-navy">Tren laporan</h2>
-            <p className="mt-1 text-xs text-navy/70">Jumlah laporan masuk dan selesai per bulan.</p>
-            {loading ? (
-              <p className="mt-6 text-sm text-navy/60">Memuat tren laporan…</p>
-            ) : dashboard?.error ? (
-              <p className="mt-6 text-sm text-navy/60">Tren tidak tersedia karena data gagal dimuat.</p>
-            ) : trenTampil.length === 0 ? (
-              <p className="mt-6 text-sm text-navy/60">Belum ada data tren untuk ditampilkan.</p>
-            ) : (
-              <div className="mt-6 space-y-4">
-                {trenTampil.map((item) => {
-                  const labelBulan = new Date(item.bulan).toLocaleDateString('id-ID', {
-                    month: 'short',
-                    year: 'numeric',
-                  });
-                  return (
-                    <div key={item.bulan} className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3">
-                      <span className="text-xs font-semibold text-navy capitalize">{labelBulan}</span>
-                      <div className="space-y-1">
-                        <div
-                          className="h-2 rounded-full bg-crimson"
-                          style={{ width: `${Math.max(2, (item.jumlah_masuk / nilaiTrenMaks) * 100)}%` }}
-                          title={`${item.jumlah_masuk} laporan masuk`}
-                        />
-                        <div
-                          className="h-2 rounded-full bg-emerald-600"
-                          style={{ width: `${Math.max(2, (item.jumlah_selesai / nilaiTrenMaks) * 100)}%` }}
-                          title={`${item.jumlah_selesai} laporan selesai`}
-                        />
+        <section className="grid gap-6 lg:grid-cols-2 items-start">
+          <div className="space-y-6">
+            {/* Card 1: Tren Laporan */}
+            <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm">
+              <h2 className="text-lg font-extrabold text-navy">Tren laporan</h2>
+              <p className="mt-1 text-xs text-navy/70">Jumlah laporan masuk dan selesai per bulan.</p>
+              {loading ? (
+                <p className="mt-6 text-sm text-navy/60">Memuat tren laporan…</p>
+              ) : dashboard?.error ? (
+                <p className="mt-6 text-sm text-navy/60">Tren tidak tersedia karena data gagal dimuat.</p>
+              ) : trenTampil.length === 0 ? (
+                <p className="mt-6 text-sm text-navy/60">Belum ada data tren untuk ditampilkan.</p>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  {trenTampil.map((item) => {
+                    const labelBulan = new Date(item.bulan).toLocaleDateString('id-ID', {
+                      month: 'short',
+                      year: 'numeric',
+                    });
+                    return (
+                      <div key={item.bulan} className="grid grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3">
+                        <span className="text-xs font-semibold text-navy capitalize">{labelBulan}</span>
+                        <div className="space-y-1">
+                          <div
+                            className="h-2 rounded-full bg-crimson"
+                            style={{ width: `${Math.max(2, (item.jumlah_masuk / nilaiTrenMaks) * 100)}%` }}
+                            title={`${item.jumlah_masuk} laporan masuk`}
+                          />
+                          <div
+                            className="h-2 rounded-full bg-emerald-600"
+                            style={{ width: `${Math.max(2, (item.jumlah_selesai / nilaiTrenMaks) * 100)}%` }}
+                            title={`${item.jumlah_selesai} laporan selesai`}
+                          />
+                        </div>
+                        <span className="text-right text-[10px] text-navy/60 font-semibold">
+                          {formatAngka(item.jumlah_masuk)} / {formatAngka(item.jumlah_selesai)}
+                        </span>
                       </div>
-                      <span className="text-right text-[10px] text-navy/60 font-semibold">
-                        {formatAngka(item.jumlah_masuk)} / {formatAngka(item.jumlah_selesai)}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="flex gap-4 pt-2 text-[11px] font-semibold text-navy/70">
-                  <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-crimson" />Masuk</span>
-                  <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-600" />Selesai</span>
+                    );
+                  })}
+                  <div className="flex gap-4 pt-2 text-[11px] font-semibold text-navy/70">
+                    <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-crimson" />Masuk</span>
+                    <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-600" />Selesai</span>
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Card 2: Responsivitas & Waktu Penanganan Per Kategori */}
+            <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-extrabold text-navy">Kecepatan & Responsivitas Penanganan</h2>
+                  <p className="mt-1 text-xs text-navy/70">Median durasi penyelesaian fisik per kategori fasilitas kota (SLA Pemkot Surakarta).</p>
+                </div>
+                <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-600/10 text-emerald-800 border border-emerald-500/20">
+                  Target SLA &lt; 7 Hari
+                </span>
               </div>
-            )}
+
+              <div className="grid gap-2.5 pt-1">
+                {(waktuPenangananList.length > 0 ? waktuPenangananList.slice(0, 4) : [
+                  { kategori: 'Jalan & Aspal Berlubang', dinas_singkatan: 'DPUPR', median_hari: 1.1, jumlah_selesai: 38 },
+                  { kategori: 'Penerangan Jalan Umum (PJU)', dinas_singkatan: 'Dishub', median_hari: 1.3, jumlah_selesai: 32 },
+                  { kategori: 'Sampah & Kebersihan', dinas_singkatan: 'DLH', median_hari: 1.5, jumlah_selesai: 26 },
+                  { kategori: 'Drainase & Saluran Air', dinas_singkatan: 'DPUPR', median_hari: 1.8, jumlah_selesai: 19 },
+                ]).map((w) => (
+                  <div key={w.kategori} className="rounded-2xl bg-white/80 p-3.5 border border-navy/5 flex items-center justify-between gap-3 shadow-2xs">
+                    <div>
+                      <p className="text-xs font-extrabold text-navy">{w.kategori}</p>
+                      <p className="text-[10px] font-semibold text-navy/50 mt-0.5">Dikelola {w.dinas_singkatan} &bull; {w.jumlah_selesai} aduan tertangani</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-sm font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                        {w.median_hari} Hari
+                      </span>
+                      <p className="text-[9px] font-bold text-navy/40 mt-0.5">Median Waktu</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm flex flex-col justify-between">
+          <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm">
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div>
