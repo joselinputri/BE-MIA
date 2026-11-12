@@ -184,7 +184,7 @@ export async function evaluasiLaporanCerdas(
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
 
     const promptText = `Anda adalah asisten AI resmi verifikasi kelayakan laporan aduan warga Kota Surakarta (Platform RAMPUNG).
 Tugas Anda:

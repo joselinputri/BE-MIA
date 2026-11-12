@@ -120,17 +120,34 @@ export default function AdminPage() {
     setSedangMemprosesId(id);
     setPesanAksi(null);
     try {
+      let bodyData: any = { aksi };
+      if (aksi === 'verifikasi_sah') {
+        const regu = prompt('Masukkan nama Regu Pelaksana (contoh: Tim Reaksi Cepat DPUPR Surakarta):', 'Tim Reaksi Cepat DPUPR Surakarta');
+        if (regu === null) {
+          setSedangMemprosesId(null);
+          return;
+        }
+        const mandor = prompt('Masukkan nama Mandor / Penanggung Jawab Lapangan:', 'Bambang Triyono, S.T.');
+        const surat = prompt('Masukkan Nomor Surat Tugas:', 'ST-2026-DPUPR-SKA');
+        bodyData.catatan_teknis = {
+          regu_pelaksana: regu || 'Tim Reaksi Cepat Dinas Pengampu',
+          mandor: mandor || 'Petugas Lapangan Berwenang',
+          surat_tugas: surat || 'ST-2026-SURAKARTA',
+          spesifikasi_material: 'Standar Teknis Lapangan SNI',
+          waktu_penugasan: new Date().toLocaleString('id-ID'),
+        };
+      } else {
+        bodyData.alasan = 'Ditolak oleh admin: Bukan fasilitas publik / spam';
+      }
+
       const res = await fetchAuthed(`/api/admin/laporan/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          aksi,
-          alasan: aksi === 'tolak_spam' ? 'Ditolak oleh admin: Bukan fasilitas publik / spam' : undefined,
-        }),
+        body: JSON.stringify(bodyData),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.pesan || 'Gagal memoderasi laporan.');
-      setPesanAksi(aksi === 'verifikasi_sah' ? 'Laporan berhasil diverifikasi sah.' : 'Laporan ditolak.');
+      setPesanAksi(aksi === 'verifikasi_sah' ? 'Laporan berhasil diverifikasi sah & tim lapangan ditugaskan.' : 'Laporan ditolak.');
       await muatDataLaporan();
     } catch (err: any) {
       alert(err?.message || 'Gagal memproses moderasi laporan.');
@@ -278,18 +295,18 @@ export default function AdminPage() {
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {isSpam && (
+                              {lap.status === 'masuk' || isSpam ? (
                                 <button
                                   type="button"
                                   disabled={sedangMemprosesId === lap.id}
                                   onClick={() => handleModerasiStatus(lap.id, 'verifikasi_sah')}
                                   className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-1 disabled:opacity-50"
-                                  title="Verifikasi sebagai laporan sah"
+                                  title="Verifikasi sah dan tugaskan regu/mandor"
                                 >
                                   <CheckCircle className="size-3.5" />
-                                  <span>Verifikasi Sah</span>
+                                  <span>Verifikasi & Tugaskan</span>
                                 </button>
-                              )}
+                              ) : null}
                               {lap.status !== 'ditolak' && (
                                 <button
                                   type="button"

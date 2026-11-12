@@ -99,16 +99,30 @@ export async function PATCH(
     const aksi = body.aksi; // 'verifikasi_sah' | 'tolak_spam'
 
     if (aksi === 'verifikasi_sah') {
-      // Hapus penanda spam/verifikasi tambahan
+      const { catatan_teknis } = body;
+      const payload: Record<string, any> = {
+        penanda: [],
+        status: 'sedang_ditangani',
+        updated_at: new Date().toISOString(),
+      };
+
+      if (catatan_teknis && typeof catatan_teknis === 'object') {
+        payload.catatan_teknis = catatan_teknis;
+      }
+
       await supabaseAdmin
         .from('laporan')
-        .update({
-          penanda: [],
-          updated_at: new Date().toISOString(),
-        })
+        .update(payload)
         .eq('id', laporanId);
 
-      return apiSukses({ pesan: 'Laporan telah diverifikasi sah sebagai aduan publik.' });
+      await supabaseAdmin.from('status_history').insert({
+        laporan_id: laporanId,
+        status_dari: 'masuk',
+        status_ke: 'sedang_ditangani',
+        catatan: body.catatan || 'Laporan telah diverifikasi oleh Administrator dan dialokasikan regu penanganan.',
+      });
+
+      return apiSukses({ pesan: 'Laporan telah diverifikasi sah dan penanganan sedang berjalan.' });
     }
 
     if (aksi === 'tolak_spam') {

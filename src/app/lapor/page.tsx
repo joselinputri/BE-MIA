@@ -245,7 +245,7 @@ export default function LaporPage() {
   }
 
   return (
-    <main className="min-h-screen bg-mist pb-20">
+    <main className="min-h-screen pb-20">
       {/* ── Hero ── */}
       <section className="mx-auto max-w-6xl px-4 pt-6">
         <Reveal>
@@ -308,9 +308,11 @@ export default function LaporPage() {
                       <span className="text-navy/60">({pengguna.email})</span>
                     </div>
                   </div>
-                  <span className="px-3 py-1 rounded-lg bg-emerald-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider">
-                    Hak Akses: {pengguna.peran}
-                  </span>
+                  {pengguna.peran === 'admin' && (
+                    <span className="px-3 py-1 rounded-lg bg-emerald-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider">
+                      Hak Akses: Administrator
+                    </span>
+                  )}
                 </div>
               )}
 

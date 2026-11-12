@@ -788,18 +788,34 @@ function RiwayatContent() {
 
               {/* Informasi Alur Petugas Lapangan */}
               {!isPetugasOrAdmin && currentLap && currentLap.status !== 'selesai' && (
-                <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
+                <div className={cn(
+                  'rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap border',
+                  currentLap.status === 'masuk'
+                    ? 'bg-blue-50/80 border-blue-200 text-blue-900'
+                    : 'bg-amber-50 border-amber-200/80'
+                )}>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-500/10 text-amber-700 rounded-xl">
-                      <UserCheck className="w-5 h-5" />
+                    <div className={cn(
+                      'p-2 rounded-xl',
+                      currentLap.status === 'masuk' ? 'bg-blue-600/10 text-blue-700' : 'bg-amber-500/10 text-amber-700'
+                    )}>
+                      {currentLap.status === 'masuk' ? <Clock className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
                     </div>
                     <div>
-                      <p className="text-xs font-extrabold text-navy">
-                        Penanganan Sedang Berjalan
-                      </p>
-                      <p className="text-[11px] text-navy/70">
-                        Petugas lapangan berwenang yang ditugaskan akan mengunggah foto bukti sesudah perbaikan dan catatan teknis.
-                      </p>
+                      {currentLap.status === 'masuk' ? (
+                        <p className="text-xs font-extrabold text-navy">
+                          Mohon ditunggu verifikasi dari petugas
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-xs font-extrabold text-navy">
+                            Penanganan Sedang Berjalan
+                          </p>
+                          <p className="text-[11px] text-navy/70">
+                            Petugas lapangan berwenang yang ditugaskan akan mengunggah foto bukti sesudah perbaikan dan catatan teknis.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

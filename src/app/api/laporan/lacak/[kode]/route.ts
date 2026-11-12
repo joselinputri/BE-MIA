@@ -79,6 +79,10 @@ export async function GET(
       { status_ke: 'selesai', judul_tahap: 'Konfirmasi', catatan: 'Pekerjaan selesai, menunggu validasi warga pelapor', created_at: laporan.updated_at }
     ];
 
+    // Ambil catatan teknis jika laporan sudah diverifikasi / ditindaklanjuti
+    const sudahDiverifikasi = laporan.status !== 'masuk';
+    const catatanTeknis = sudahDiverifikasi && laporan.catatan_teknis ? laporan.catatan_teknis : null;
+
     return apiSukses({
       laporan: {
         ...laporan,
@@ -87,13 +91,7 @@ export async function GET(
         foto_sesudah_paths: formatBanyakUrlFoto(laporan.foto_sesudah_paths || []),
       },
       linimasa: linimasaList,
-      catatan_teknis: {
-        regu_pelaksana: `Tim Reaksi Cepat (${laporan.kelurahan || 'Kec. Laweyan'})`,
-        mandor: 'Bambang Triyono, S.T.',
-        surat_tugas: 'SK-2025-UPTD-SURAKARTA',
-        spesifikasi_material: 'Material standar teknis SNI dengan pemadatan mekanis',
-        kondisi_cuaca: 'Cerah Berawan',
-      },
+      catatan_teknis: catatanTeknis,
       transparansi_penugasan: {
         waktu_respon_awal: '2 Jam 33 Menit',
         batas_maks_respon: '6 Jam',

@@ -81,11 +81,12 @@ export default function KomparasiSlider({
         className="relative h-64 sm:h-80 w-full overflow-hidden rounded-2xl border-2 border-navy/20 select-none cursor-ew-resize bg-slate-900 shadow-md"
       >
         {/* Lapisan Foto Sesudah (Dasar) */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none">
           <img
             src={fotoSesudah}
             alt={altSesudah}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover select-none pointer-events-none"
+            draggable={false}
           />
           <span className="absolute bottom-3 right-3 bg-emerald-700/90 backdrop-blur-xs text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg shadow-sm">
             Sesudah (Tuntas)
@@ -94,17 +95,16 @@ export default function KomparasiSlider({
 
         {/* Lapisan Foto Sebelum (Dipotong oleh Posisi Slider) */}
         <div
-          className="absolute inset-0 overflow-hidden"
+          className="absolute inset-0 overflow-hidden pointer-events-none"
           style={{ width: `${posisiSlider}%` }}
         >
-          <div className="relative h-full w-full min-w-[320px] sm:min-w-[600px]">
-            <img
-              src={fotoSebelum}
-              alt={altSebelum}
-              className="absolute inset-0 h-full w-full object-cover"
-              style={{ width: containerRef.current ? `${containerRef.current.clientWidth}px` : '100%' }}
-            />
-          </div>
+          <img
+            src={fotoSebelum}
+            alt={altSebelum}
+            className="absolute inset-0 h-full max-w-none object-cover select-none pointer-events-none"
+            draggable={false}
+            style={{ width: containerRef.current ? `${containerRef.current.clientWidth}px` : '100%' }}
+          />
           <span className="absolute bottom-3 left-3 bg-crimson/90 backdrop-blur-xs text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg shadow-sm">
             Sebelum
           </span>

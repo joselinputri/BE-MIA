@@ -210,12 +210,34 @@ export default function PetaLeaflet({
               ? 'bg-crimson text-white shadow-sm'
               : 'text-white/70 hover:text-white hover:bg-white/10'
           }`}
-          title="Tampilkan radius intensitas / sebaran titik aduan"
+          title="Tampilkan radius intensitas / sebaran titik aduan warga"
         >
           <Flame className="w-3.5 h-3.5" />
-          <span>Kepadatan Sebaran</span>
+          <span>Kepadatan Sebaran Aduan</span>
         </button>
       </div>
+
+      {modeVisualisasi === 'sebaran' && (
+        <div className="absolute top-16 left-4 z-[1000] max-w-xs bg-navy/90 backdrop-blur-md border border-white/15 text-white p-3 rounded-2xl shadow-xl text-[11px] leading-relaxed space-y-1.5 pointer-events-none animate-in fade-in">
+          <div className="flex items-center gap-1.5 font-bold text-amber-300">
+            <Flame className="w-3.5 h-3.5" />
+            <span>Peta Kepadatan Sebaran Aduan Warga</span>
+          </div>
+          <p className="text-white/80">
+            Menampilkan akumulasi titik keluhan fasilitas kota Surakarta.
+          </p>
+          <div className="flex items-center gap-3 pt-1 text-[10px] font-semibold">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-crimson inline-block"></span>
+              Aduan Aktif (Butuh Penanganan)
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              Tuntas Tertangani
+            </span>
+          </div>
+        </div>
+      )}
 
       <MapContainer
         center={centerPosition}
