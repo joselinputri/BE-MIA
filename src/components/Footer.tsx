@@ -6,7 +6,6 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 text-xs text-navy sm:px-8 md:grid-cols-3 md:items-center">
         <div>
           <p className="text-sm font-extrabold">RAMPUNG</p>
-          <p className="mt-1">(Ruang Aduan, Monitor Penanganan, Ungkap Nyata Guyub)</p>
           <p className="mt-2 text-navy/80">Pemerintah Kota Surakarta &middot; Kolaborasi Guyub Rukun Tanggap Fasilitas Publik</p>
         </div>
         <nav aria-label="Navigasi footer" className="flex flex-wrap gap-x-4 gap-y-1 font-semibold md:justify-center">
@@ -21,4 +20,3 @@ export default function Footer() {
     </footer>
   );
 }
-

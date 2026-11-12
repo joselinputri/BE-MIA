@@ -32,6 +32,7 @@ export default function PetaPage() {
   const [selectedTicket, setSelectedTicket] = useState<Laporan | null>(null);
   const laporan = laporanList || [];
   const totalTitik = laporan.length;
+  const jumlahTanpaKecamatan = laporan.filter((item) => !item.kecamatan).length;
   const jumlahDiproses = laporan.filter((item) => item.status === 'sedang_ditangani').length;
   const jumlahStatus = (status: string) => laporan.filter((item) => item.status === status).length;
   const jumlahWilayah = (wilayah: string) =>
@@ -61,6 +62,11 @@ export default function PetaPage() {
       {error && (
         <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm font-semibold text-crimson">
           Data peta gagal dimuat: {error.message}
+        </div>
+      )}
+      {!loading && jumlahTanpaKecamatan > 0 && (
+        <div role="status" className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-950">
+          {jumlahTanpaKecamatan} laporan belum memiliki kecamatan. Lokasinya tetap terlihat pada filter “Belum dipetakan”; batas wilayah Supabase perlu dilengkapi agar laporan dapat dikelompokkan per kecamatan.
         </div>
       )}
       {/* ── 1. Page Hero ── */}
@@ -102,11 +108,17 @@ export default function PetaPage() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             <span className="text-[11px] font-extrabold uppercase text-navy/70 mr-1 shrink-0">Kecamatan:</span>
             {[
-              { id: 'semua', label: `Semua (${totalTitik})` },
+              { id: 'semua', label: `Semua (${loading ? '…' : totalTitik})` },
               ...['Banjarsari', 'Jebres', 'Laweyan', 'Pasar Kliwon', 'Serengan'].map((nama) => ({
                 id: nama.toLowerCase(),
-                label: `${nama} (${jumlahWilayah(nama)})`,
+                label: `${nama} (${loading ? '…' : jumlahWilayah(nama)})`,
               })),
+              ...(jumlahTanpaKecamatan > 0
+                ? [{
+                    id: 'tanpa-kecamatan',
+                    label: `Belum dipetakan (${loading ? '…' : jumlahTanpaKecamatan})`,
+                  }]
+                : []),
             ].map((k) => (
               <button
                 key={k.id}
@@ -128,9 +140,9 @@ export default function PetaPage() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {[
               { id: 'semua', label: 'Semua Status' },
-              { id: 'masuk', label: `Baru (${jumlahStatus('masuk')})` },
-              { id: 'sedang_ditangani', label: `Diproses (${jumlahStatus('sedang_ditangani')})` },
-              { id: 'selesai', label: `Selesai (${jumlahStatus('selesai')})` },
+              { id: 'masuk', label: `Baru (${loading ? '…' : jumlahStatus('masuk')})` },
+              { id: 'sedang_ditangani', label: `Diproses (${loading ? '…' : jumlahStatus('sedang_ditangani')})` },
+              { id: 'selesai', label: `Selesai (${loading ? '…' : jumlahStatus('selesai')})` },
             ].map((s) => (
               <button
                 key={s.id}
@@ -183,19 +195,19 @@ export default function PetaPage() {
             <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-navy/10 text-navy/80">
               <div className="flex flex-wrap items-center gap-4">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-crimson" />
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A40033' }} />
                   <span>Perlu Respon</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EA580C' }} />
                   <span>Diproses Tim</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#047857' }} />
                   <span>Selesai Tuntas</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-orange-400" />
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#D97706' }} />
                   <span>Aduan Baru</span>
                 </span>
               </div>

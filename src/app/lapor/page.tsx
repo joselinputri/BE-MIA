@@ -18,11 +18,16 @@ import {
   Sparkles,
   ArrowRight,
   RotateCw,
+  Lock,
+  LogIn,
+  UserPlus,
+  UserCheck,
 } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import { PageHero, Pil, tombolDasar } from '@/components/ui';
 import { KATEGORI, type KategoriUI } from '@/lib/kategori';
 import { kirimLaporan } from '@/lib/client/data';
+import { useAuth } from '@/lib/client/auth';
 import { cn } from '@/lib/utils';
 
 /* ────────────────── constants ────────────────── */
@@ -62,6 +67,7 @@ const SLA_STEPS = [
 /* ══════════════════════ PAGE ══════════════════════ */
 export default function LaporPage() {
   const router = useRouter();
+  const { pengguna, siap } = useAuth();
 
   /* ── form state ── */
   const [kategori, setKategori] = useState<string | null>('penambalan-aspal');
@@ -207,8 +213,10 @@ export default function LaporPage() {
       longitude,
       foto_url: foto || undefined,
       foto_file: fotoFile,
-      is_anonim: true,
+      is_anonim: false,
       turnstile_token: turnstileToken || undefined,
+      email_pelapor: pengguna?.email,
+      telepon_pelapor: pengguna?.no_telepon,
     });
 
     setIsSubmitting(false);
@@ -239,10 +247,63 @@ export default function LaporPage() {
 
       {/* ── Main Content — two columns ── */}
       <section className="mx-auto mt-8 max-w-6xl px-4">
-        <div className="grid gap-8 md:grid-cols-[1fr_340px]">
-          {/* ════════ LEFT COLUMN — Form Steps ════════ */}
-          <div className="space-y-10">
-            {/* ── Step 1: Pilih Jenis Masalah ── */}
+        {siap && !pengguna ? (
+          <div className="mx-auto max-w-2xl">
+            <Reveal>
+              <div className="rounded-3xl border-2 border-navy/15 bg-white p-8 sm:p-10 text-center shadow-[0_8px_24px_rgba(40,38,75,.12)] space-y-6">
+                <div className="mx-auto grid size-20 place-items-center rounded-3xl bg-crimson/10 text-crimson">
+                  <Lock className="size-10" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black text-navy sm:text-3xl">
+                    Wajib Masuk (Login) Terlebih Dahulu
+                  </h2>
+                  <p className="text-sm text-navy/70 leading-relaxed max-w-lg mx-auto">
+                    Demi menjamin akuntabilitas data, mencegah laporan palsu/bot, dan memastikan setiap aduan fasilitas Kota Surakarta dapat ditindaklanjuti secara resmi oleh OPD terkait, Anda wajib masuk menggunakan akun <strong className="text-navy font-bold">Warga</strong> atau <strong className="text-navy font-bold">Administrator</strong>.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <Link
+                    href="/masuk"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-navy px-6 py-3.5 text-sm font-bold text-white hover:bg-slate transition shadow-sm"
+                  >
+                    <LogIn className="size-4" /> Masuk ke Akun
+                  </Link>
+                  <Link
+                    href="/daftar"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-navy/20 bg-card px-6 py-3.5 text-sm font-bold text-navy hover:bg-navy/5 transition"
+                  >
+                    <UserPlus className="size-4" /> Buat Akun Warga Baru
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-[1fr_340px]">
+            {/* ════════ LEFT COLUMN — Form Steps ════════ */}
+            <div className="space-y-10">
+              {/* Badge Akun Pelapor Terverifikasi */}
+              {pengguna && (
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-navy font-medium shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-1.5 bg-emerald-600 text-white rounded-xl shadow-xs">
+                      <UserCheck className="size-4" />
+                    </span>
+                    <div>
+                      <span className="text-[11px] text-navy/60 block">Akun Pelapor Terverifikasi:</span>
+                      <strong className="text-navy font-bold text-sm">{pengguna.nama}</strong>{' '}
+                      <span className="text-navy/60">({pengguna.email})</span>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-lg bg-emerald-700 text-white font-mono font-bold text-[10px] uppercase tracking-wider">
+                    Hak Akses: {pengguna.peran}
+                  </span>
+                </div>
+              )}
+
+              {/* ── Step 1: Pilih Jenis Masalah ── */}
             <Reveal delay={80}>
               <div className="bg-panel p-6 rounded-3xl shadow-[0_8px_24px_rgba(40,38,75,.14)] border border-navy/10">
                 <StepHeader num={1} title="Pilih Jenis Masalah" />
@@ -508,6 +569,7 @@ export default function LaporPage() {
             </Reveal>
           </aside>
         </div>
+        )}
       </section>
 
       {/* ── Modal Dialog Sukses Buat Laporan ── */}

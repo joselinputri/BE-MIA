@@ -144,17 +144,17 @@ export default function ProfilPage() {
             </button>
           </form>
 
-          {/* ── Simulasi & Switch Peran (Warga / Petugas / Admin) ── */}
+          {/* ── Peralihan Hak Akses Peran Akun ── */}
           <div className="rounded-2xl border border-navy/15 bg-white p-5 space-y-3 mt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-extrabold text-navy">Simulasi Peran Pengguna (Uji Coba Petugas)</h3>
+                <h3 className="text-sm font-extrabold text-navy">Peralihan Hak Akses Peran Pengguna</h3>
                 <p className="text-xs text-navy/70 mt-0.5">
-                  Klik salah satu peran di bawah ini untuk menguji hak akses penanganan aduan & unggah foto bukti sesudah.
+                  Tentukan otoritas akun Anda dalam ekosistem RAMPUNG (Warga, Petugas Lapangan DPUPR, atau Administrator).
                 </p>
               </div>
               <span className="text-xs font-mono font-bold bg-navy text-white px-2.5 py-1 rounded-md">
-                Status: {pengguna.peran.toUpperCase()}
+                Peran Aktif: {pengguna.peran.toUpperCase()}
               </span>
             </div>
 

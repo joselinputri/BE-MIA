@@ -7,6 +7,7 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Laporan } from '@/lib/client/data';
+import { KATEGORI } from '@/lib/kategori';
 import { statusDari } from '@/lib/status';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
@@ -18,6 +19,7 @@ interface PetaLeafletProps {
   kategoriFilter?: string;
   kecamatanFilter?: string;
   statusFilter?: string;
+  warnaBerdasarkan?: 'status' | 'kategori';
 }
 
 const PUSAT_KECAMATAN: Record<string, [number, number]> = {
@@ -75,9 +77,16 @@ function geserKeTitik(map: LeafletMap, laporan: Laporan[]) {
 }
 
 // Marker icon generator berbasis SVG murni
-function createCustomMarker(status: string, isSelected: boolean = false) {
-  const info = statusDari(status);
-  const color = info.warna;
+function createCustomMarker(
+  status: string,
+  isSelected: boolean = false,
+  kategoriSlug?: string,
+  warnaBerdasarkan: 'status' | 'kategori' = 'status'
+) {
+  const color =
+    warnaBerdasarkan === 'kategori'
+      ? KATEGORI.find((kategori) => kategori.slug === kategoriSlug)?.warna || '#64748B'
+      : statusDari(status).warna;
   const size = isSelected ? 36 : 28;
 
   const svg = `
@@ -103,6 +112,26 @@ function createCustomMarker(status: string, isSelected: boolean = false) {
   });
 }
 
+function createClusterMarker(laporan: Laporan[], warnaBerdasarkan: 'status' | 'kategori') {
+  const warna = Array.from(
+    new Set(
+      laporan.map((item) =>
+        warnaBerdasarkan === 'kategori'
+          ? KATEGORI.find((kategori) => kategori.slug === item.kategori_slug)?.warna || '#64748B'
+          : statusDari(item.status).warna
+      )
+    )
+  );
+  const warnaLatar = warna.length === 1 ? warna[0] : '#28264B';
+
+  return L.divIcon({
+    html: `<span style="display:grid;place-items:center;width:34px;height:34px;border:3px solid #fff;border-radius:50%;background:${warnaLatar};box-shadow:0 2px 8px #28264b66;color:#fff;font-size:12px;font-weight:800">${laporan.length}</span>`,
+    className: 'custom-leaflet-pin',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
+
 export default function PetaLeaflet({
   laporan,
   selectedId,
@@ -110,6 +139,7 @@ export default function PetaLeaflet({
   kategoriFilter,
   kecamatanFilter,
   statusFilter,
+  warnaBerdasarkan = 'status',
 }: PetaLeafletProps) {
   // Filter titik laporan
   const filtered = useMemo(
@@ -119,8 +149,15 @@ export default function PetaLeaflet({
           return false;
         }
         if (
+          kecamatanFilter === 'tanpa-kecamatan' &&
+          item.kecamatan
+        ) {
+          return false;
+        }
+        if (
           kecamatanFilter &&
           kecamatanFilter !== 'semua' &&
+          kecamatanFilter !== 'tanpa-kecamatan' &&
           item.kecamatan?.toLowerCase() !== kecamatanFilter.toLowerCase()
         ) {
           return false;
@@ -132,6 +169,16 @@ export default function PetaLeaflet({
       }),
     [kategoriFilter, kecamatanFilter, laporan, statusFilter]
   );
+  const kelompokLokasi = useMemo(() => {
+    const groups = new Map<string, Laporan[]>();
+    filtered.forEach((item) => {
+      const key = `${item.latitude.toFixed(5)},${item.longitude.toFixed(5)}`;
+      const group = groups.get(key);
+      if (group) group.push(item);
+      else groups.set(key, [item]);
+    });
+    return Array.from(groups.values());
+  }, [filtered]);
 
   // Titik pusat Kota Surakarta (Balai Kota / Gladag)
   const centerPosition: [number, number] = [-7.5684, 110.825];
@@ -153,13 +200,17 @@ export default function PetaLeaflet({
         />
         <SesuaikanViewport laporan={filtered} kecamatanFilter={kecamatanFilter || 'semua'} />
 
-        {filtered.map((item) => {
-          const isSelected = selectedId === item.id;
-          const icon = createCustomMarker(item.status, isSelected);
+        {kelompokLokasi.map((group) => {
+          const item = group[0];
+          const isSelected = group.some((laporanItem) => laporanItem.id === selectedId);
+          const icon =
+            group.length > 1
+              ? createClusterMarker(group, warnaBerdasarkan)
+              : createCustomMarker(item.status, isSelected, item.kategori_slug, warnaBerdasarkan);
 
           return (
             <Marker
-              key={item.id}
+              key={`${item.latitude.toFixed(5)},${item.longitude.toFixed(5)}`}
               position={[item.latitude, item.longitude]}
               icon={icon}
               eventHandlers={{
@@ -168,31 +219,39 @@ export default function PetaLeaflet({
             >
               <Popup className="custom-leaflet-popup">
                 <div className="p-2 max-w-[240px] text-navy">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[10px] font-mono font-bold bg-navy text-white px-1.5 py-0.5 rounded">
-                      #{item.kode_lacak}
-                    </span>
-                    <span className="text-[10px] font-semibold text-slate">
-                      {item.kelurahan}, {item.kecamatan}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-bold leading-snug line-clamp-2 text-navy mb-1">
-                    {item.judul}
-                  </h4>
-                  <p className="text-[11px] text-navy/70 line-clamp-2 mb-2">
-                    {item.deskripsi}
-                  </p>
-                  <div className="flex items-center justify-between pt-1 border-t border-navy/10">
-                    <span className="text-[10px] font-semibold text-navy/70">
-                      {statusDari(item.status).label}
-                    </span>
-                    <Link
-                      href={`/riwayat?kode=${item.kode_lacak}`}
-                      className="text-[11px] font-bold text-crimson hover:underline inline-flex items-center gap-0.5"
-                    >
-                      Lacak <ArrowRight className="w-2.5 h-2.5" />
-                    </Link>
-                  </div>
+                  {group.length > 1 && (
+                    <p className="mb-2 text-[10px] font-bold text-navy/70">
+                      {group.length} laporan di lokasi yang sama
+                    </p>
+                  )}
+                  {group.map((laporanItem) => (
+                    <div key={laporanItem.id} className="border-t border-navy/10 py-2 first:border-0 first:pt-0">
+                      <button
+                        type="button"
+                        onClick={() => onSelect?.(laporanItem)}
+                        className="block text-left"
+                      >
+                        <span className="text-[10px] font-mono font-bold text-navy">
+                          #{laporanItem.kode_lacak}
+                        </span>
+                        <span className="ml-2 text-[10px] font-semibold text-slate">
+                          {laporanItem.kelurahan || laporanItem.kecamatan || 'Wilayah belum dipetakan'}
+                        </span>
+                        <span className="mt-0.5 block text-xs font-bold leading-snug text-navy">
+                          {laporanItem.judul}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] font-semibold text-navy/70">
+                          {statusDari(laporanItem.status).label}
+                        </span>
+                      </button>
+                      <Link
+                        href={`/riwayat?kode=${laporanItem.kode_lacak}`}
+                        className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-bold text-crimson hover:underline"
+                      >
+                        Lacak <ArrowRight className="h-2.5 w-2.5" />
+                      </Link>
+                    </div>
+                  ))}
                 </div>
               </Popup>
             </Marker>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,6 +12,7 @@ import { GearHero } from '@/components/GearDecor';
 import { Panel, Kartu, Pil, tombolDasar } from '@/components/ui';
 import { getDashboard, getLaporanPublik, type Dashboard, type Laporan } from '@/lib/client/data';
 import { useAsync } from '@/lib/client/hooks';
+import { supabaseBrowser } from '@/lib/client/supabase';
 import { cn } from '@/lib/utils';
 import { KATEGORI } from '@/lib/kategori';
 
@@ -60,9 +61,27 @@ export default function Beranda() {
   const [voiceMessage, setVoiceMessage] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
-  const { data: dash } = useAsync<Dashboard>(() => getDashboard(), []);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const { data: dash } = useAsync<Dashboard>(() => getDashboard(), [refreshTick]);
   const { data: laporanList, error: laporanError, loading: laporanLoading } =
-    useAsync<Laporan[]>(() => getLaporanPublik(), []);
+    useAsync<Laporan[]>(() => getLaporanPublik(), [refreshTick]);
+
+  useEffect(() => {
+    if (!supabaseBrowser) return;
+    const channel = supabaseBrowser
+      .channel('home_realtime_feed')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'laporan' },
+        () => {
+          setRefreshTick((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabaseBrowser?.removeChannel(channel);
+    };
+  }, []);
 
   const r = dash?.ringkasan;
   const laporanTersaring = useMemo(() => (laporanList || []).filter((laporan) => {
@@ -337,12 +356,13 @@ export default function Beranda() {
                   kecamatanFilter={filterKec === 'Semua' ? 'semua' : filterKec}
                   statusFilter={filterStatus}
                   kategoriFilter={filterKategori}
+                  warnaBerdasarkan="kategori"
                 />
               </div>
 
               {/* Category legend */}
               <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-navy/10 px-4 py-3">
-                {KATEGORI.slice(0, 5).map((k) => (
+                {KATEGORI.map((k) => (
                   <span key={k.slug} className="flex items-center gap-1.5 text-[10px] font-semibold text-navy">
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: k.warna }} aria-hidden="true" />
                     {k.nama}
@@ -421,7 +441,7 @@ export default function Beranda() {
                 <div>
                   <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-navy/70">Sebelum Perbaikan</span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {fotoSebelum ? (
+                    {fotoSebelum && (
                       <Image
                         src={fotoSebelum}
                         alt="Kondisi sebelum perbaikan"
@@ -429,10 +449,6 @@ export default function Beranda() {
                         className="object-cover"
                         sizes="(max-width:640px) 100vw, 50vw"
                       />
-                    ) : (
-                      <span className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-navy/70">
-                        Foto sebelum perbaikan belum tersedia.
-                      </span>
                     )}
                   </div>
                 </div>
@@ -443,7 +459,7 @@ export default function Beranda() {
                     {firstLaporan.status === 'selesai' ? 'Sesudah (Tuntas)' : 'Foto Pembaruan'}
                   </span>
                   <div className="relative aspect-video overflow-hidden rounded-2xl bg-lilac/30">
-                    {fotoSesudah ? (
+                    {fotoSesudah && (
                       <Image
                         src={fotoSesudah}
                         alt="Kondisi sesudah perbaikan"
@@ -451,7 +467,8 @@ export default function Beranda() {
                         className="object-cover"
                         sizes="(max-width:640px) 100vw, 50vw"
                       />
-                    ) : (
+                    )}
+                    {!fotoSesudah && (
                       <span className="absolute inset-0 grid place-items-center px-4 text-center text-xs text-navy/70">
                         Belum ada foto pembaruan yang tercatat.
                       </span>
@@ -514,15 +531,16 @@ export default function Beranda() {
             </p>
           </Panel>
 
-          {/* Right: Audit Gotong Royong Dua Arah */}
+          {/* Right: Audit Gotong Royong Dua Arah & Realtime Sync */}
           <Kartu className="bg-dark-card flex flex-col justify-between gap-5 p-6 text-white shadow-xl">
             <div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-white/70">
                   Audit Gotong Royong Warga
                 </h2>
-                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
-                  Validasi Dua Arah
+                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Sync Real-time
                 </span>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-white/80">
@@ -538,17 +556,23 @@ export default function Beranda() {
                 </div>
                 <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10 backdrop-blur-sm">
                   <div className="text-2xl font-black text-white">
-                    {dash?.konfirmasi?.total_dikonfirmasi ?? 60}
+                    {dash?.konfirmasi?.total_dikonfirmasi ?? 64}
                   </div>
-                  <div className="mt-1 text-[11px] font-medium text-white/70">Laporan Dikonfirmasi</div>
+                  <div className="mt-1 text-[11px] font-medium text-white/70">Aduan Dikonfirmasi</div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl bg-white/5 p-3 text-[11px] text-white/70 border border-white/10">
-              <span className="font-semibold text-white">Rasio Buka Ulang (Reopen):</span>{' '}
-              {dash?.konfirmasi?.persen_dibuka_ulang ? `${dash.konfirmasi.persen_dibuka_ulang}%` : '2.7%'}
-              <p className="mt-0.5 text-[10px] text-white/50">Warga berhak menolak hasil kerja jika belum tuntas.</p>
+            <div className="rounded-xl bg-white/5 p-3 text-[11px] text-white/70 border border-white/10 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-white">Rasio Buka Ulang (Reopen):</span>
+                <span className="font-mono font-bold text-amber-300">
+                  {dash?.konfirmasi?.persen_dibuka_ulang ? `${dash.konfirmasi.persen_dibuka_ulang}%` : '2.7%'}
+                </span>
+              </div>
+              <p className="text-[10px] text-white/50">
+                Warga memiliki hak veto menolak hasil kerja jika belum tuntas atau tidak sesuai kondisi lapangan.
+              </p>
             </div>
           </Kartu>
         </section>
