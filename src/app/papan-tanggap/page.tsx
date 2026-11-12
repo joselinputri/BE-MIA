@@ -4,8 +4,24 @@ import { useEffect, useState } from 'react';
 import Reveal from '@/components/Reveal';
 import { getDashboard, type Dashboard, type Tren, type Dinas } from '@/lib/client/data';
 import { useAsync } from '@/lib/client/hooks';
-import { supabaseBrowser } from '@/lib/client/supabase';
+import { supabaseBrowser, fetchAuthed } from '@/lib/client/supabase';
 import dashboardMock from '../../../mocks/dashboard.json';
+
+interface UlasanItem {
+  id: string;
+  wilayah: string;
+  rating: number;
+  komentar: string;
+  waktu: string;
+}
+
+interface SebaranItem {
+  nama: string;
+  penduduk: string;
+  persentase: string;
+  total_aduan?: number;
+  tuntas?: number;
+}
 
 function formatAngka(value: number) {
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
@@ -14,10 +30,40 @@ function formatAngka(value: number) {
 export default function PapanTanggapPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const { data: dashboard, loading } = useAsync(() => getDashboard(), [refreshTick]);
+  const [ulasanList, setUlasanList] = useState<UlasanItem[]>([]);
+  const [sebaranList, setSebaranList] = useState<SebaranItem[]>([
+    { nama: 'Banjarsari', penduduk: '189.540', persentase: '94%' },
+    { nama: 'Jebres', penduduk: '154.210', persentase: '91%' },
+    { nama: 'Laweyan', penduduk: '102.830', persentase: '95%' },
+    { nama: 'Pasar Kliwon', penduduk: '86.420', persentase: '89%' },
+    { nama: 'Serengan', penduduk: '54.646', persentase: '96%' },
+  ]);
+
   const dashData: Dashboard = dashboard || (dashboardMock as unknown as Dashboard);
   const ringkasan = dashData.ringkasan;
   const tren: Tren[] = dashData.tren || [];
   const nilaiTrenMaks = Math.max(1, ...tren.map((item: Tren) => item.jumlah_masuk));
+
+  useEffect(() => {
+    // Ambil ulasan warga dan sebaran wilayah dinamis dari backend
+    fetchAuthed('/api/dashboard/ulasan-warga')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.data && Array.isArray(j.data) && j.data.length > 0) {
+          setUlasanList(j.data);
+        }
+      })
+      .catch(() => {});
+
+    fetchAuthed('/api/dashboard/sebaran-wilayah')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.data && Array.isArray(j.data) && j.data.length > 0) {
+          setSebaranList(j.data);
+        }
+      })
+      .catch(() => {});
+  }, [refreshTick]);
 
   useEffect(() => {
     if (!supabaseBrowser) return;
@@ -26,6 +72,13 @@ export default function PapanTanggapPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'laporan' },
+        () => {
+          setRefreshTick((prev) => prev + 1);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'konfirmasi_pelapor' },
         () => {
           setRefreshTick((prev) => prev + 1);
         }
@@ -253,24 +306,30 @@ export default function PapanTanggapPage() {
                       <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Terverifikasi</span>
                     </div>
                     <div className="space-y-2">
-                      <div className="rounded-xl border border-navy/5 bg-navy/[0.02] p-2.5 text-xs">
-                        <div className="flex items-center justify-between text-[10px] text-navy/50 font-semibold mb-1">
-                          <span>Warga Laweyan • Jl. Dr. Rajiman</span>
-                          <span className="text-amber-500 font-bold">★★★★★</span>
+                      {(ulasanList.length > 0 ? ulasanList.slice(0, 2) : [
+                        {
+                          id: 'u1',
+                          wilayah: 'Warga Laweyan • Jl. Dr. Rajiman',
+                          rating: 5,
+                          komentar: 'Lubang aspal berbahaya sudah ditambal rapi dalam 2 hari kerja. Respon cepat tim reaksi cepat Surakarta sangat membantu.',
+                        },
+                        {
+                          id: 'u2',
+                          wilayah: 'Warga Jebres • Sekitar Kampus UNS',
+                          rating: 5,
+                          komentar: 'PJU mati langsung diganti unit lampu baru setelah dilaporkan via RAMPUNG. Jalan kini terang dan aman dilewati malam hari.',
+                        },
+                      ]).map((u) => (
+                        <div key={u.id} className="rounded-xl border border-navy/5 bg-navy/[0.02] p-2.5 text-xs">
+                          <div className="flex items-center justify-between text-[10px] text-navy/50 font-semibold mb-1">
+                            <span>{u.wilayah}</span>
+                            <span className="text-amber-500 font-bold">{'★'.repeat(u.rating)}{'☆'.repeat(5 - u.rating)}</span>
+                          </div>
+                          <p className="text-[11px] text-navy/80 italic font-medium leading-relaxed">
+                            &ldquo;{u.komentar}&rdquo;
+                          </p>
                         </div>
-                        <p className="text-[11px] text-navy/80 italic font-medium leading-relaxed">
-                          &ldquo;Lubang aspal berbahaya sudah ditambal rapi dalam 2 hari kerja. Respon cepat tim reaksi cepat Surakarta sangat membantu.&rdquo;
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-navy/5 bg-navy/[0.02] p-2.5 text-xs">
-                        <div className="flex items-center justify-between text-[10px] text-navy/50 font-semibold mb-1">
-                          <span>Warga Jebres • Sekitar Kampus UNS</span>
-                          <span className="text-amber-500 font-bold">★★★★★</span>
-                        </div>
-                        <p className="text-[11px] text-navy/80 italic font-medium leading-relaxed">
-                          &ldquo;PJU mati langsung diganti unit lampu baru setelah dilaporkan via RAMPUNG. Jalan kini terang dan aman dilewati malam hari.&rdquo;
-                        </p>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -318,13 +377,7 @@ export default function PapanTanggapPage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 pt-2">
-            {[
-              { nama: 'Banjarsari', penduduk: '189.540', persentase: '94%' },
-              { nama: 'Jebres', penduduk: '154.210', persentase: '91%' },
-              { nama: 'Laweyan', penduduk: '102.830', persentase: '95%' },
-              { nama: 'Pasar Kliwon', penduduk: '86.420', persentase: '89%' },
-              { nama: 'Serengan', penduduk: '54.646', persentase: '96%' },
-            ].map((k) => (
+            {sebaranList.map((k) => (
               <div key={k.nama} className="rounded-2xl bg-white/90 p-4 border border-navy/10 space-y-2 shadow-sm">
                 <span className="font-extrabold text-sm text-navy block">{k.nama}</span>
                 <p className="text-[11px] text-slate">{k.penduduk} Jiwa</p>

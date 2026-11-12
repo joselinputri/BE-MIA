@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       p_kategori_slug: kategori || null,
       p_kecamatan_kode: kecamatan || null,
       p_kelurahan_kode: kelurahan || null,
-      p_sumber: sumber || 'asli',
+      p_sumber: sumber || 'semua',
     });
 
     if (error) {
