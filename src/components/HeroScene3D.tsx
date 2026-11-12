@@ -1,137 +1,189 @@
 'use client';
 
-import { useRef, useMemo, Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial } from '@react-three/drei';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-/* ── Partikel kecil melayang (titik-titik cahaya kota) ── */
-function Particles({ count = 120 }: { count?: number }) {
-  const mesh = useRef<THREE.Points>(null!);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 10;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 6;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 6;
-    }
-    return arr;
-  }, [count]);
-
-  const colors = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    const palette = [
-      new THREE.Color('#A40033'),  // crimson
-      new THREE.Color('#C5C2D1'),  // silver
-      new THREE.Color('#28264B'),  // navy
-      new THREE.Color('#7B6FC4'),  // peri
-      new THREE.Color('#059669'),  // emerald
-    ];
-    for (let i = 0; i < count; i++) {
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      arr[i * 3] = c.r;
-      arr[i * 3 + 1] = c.g;
-      arr[i * 3 + 2] = c.b;
-    }
-    return arr;
-  }, [count]);
-
-  useFrame((_, delta) => {
-    if (mesh.current) {
-      mesh.current.rotation.y += delta * 0.03;
-      mesh.current.rotation.x += delta * 0.01;
-    }
-  });
-
-  return (
-    <points ref={mesh}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
-        <bufferAttribute attach="attributes-color" count={count} array={colors} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial size={0.06} vertexColors transparent opacity={0.85} sizeAttenuation />
-    </points>
-  );
-}
-
-/* ── Bola distorsi organik (simbol globe/smart city) ── */
-function DistortSphere() {
-  const mesh = useRef<THREE.Mesh>(null!);
-
-  useFrame((state) => {
-    if (mesh.current) {
-      mesh.current.rotation.y = state.clock.elapsedTime * 0.15;
-      mesh.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
-    }
-  });
-
-  return (
-    <Float speed={1.5} rotationIntensity={0.4} floatIntensity={0.6}>
-      <mesh ref={mesh} scale={1.6}>
-        <icosahedronGeometry args={[1, 8]} />
-        <MeshDistortMaterial
-          color="#28264B"
-          roughness={0.3}
-          metalness={0.8}
-          distort={0.35}
-          speed={2}
-          transparent
-          opacity={0.55}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-/* ── Ring orbit transparan ── */
-function OrbitRing({ radius = 2.2, color = '#A40033' }: { radius?: number; color?: string }) {
-  const ring = useRef<THREE.Mesh>(null!);
-  useFrame((state) => {
-    if (ring.current) {
-      ring.current.rotation.x = Math.PI / 2.5 + Math.sin(state.clock.elapsedTime * 0.4) * 0.15;
-      ring.current.rotation.z = state.clock.elapsedTime * 0.1;
-    }
-  });
-  return (
-    <mesh ref={ring}>
-      <torusGeometry args={[radius, 0.012, 16, 100]} />
-      <meshBasicMaterial color={color} transparent opacity={0.35} />
-    </mesh>
-  );
-}
-
-/* ── Scene utama ── */
-function Scene() {
-  return (
-    <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#E8E5F4" />
-      <pointLight position={[-3, -2, 2]} intensity={0.5} color="#A40033" />
-      <DistortSphere />
-      <OrbitRing radius={2.4} color="#A40033" />
-      <OrbitRing radius={2.9} color="#7B6FC4" />
-      <Particles count={140} />
-    </>
-  );
-}
-
 export default function HeroScene3D() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    /* ── Setup ── */
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    camera.position.set(0, 0, 5.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    container.appendChild(renderer.domElement);
+
+    /* ── Lights ── */
+    scene.add(new THREE.AmbientLight(0xe8e5f4, 0.5));
+    const dirLight = new THREE.DirectionalLight(0xe8e5f4, 0.8);
+    dirLight.position.set(5, 5, 5);
+    scene.add(dirLight);
+    const pointLight = new THREE.PointLight(0xa40033, 0.6, 20);
+    pointLight.position.set(-3, -2, 2);
+    scene.add(pointLight);
+
+    /* ── Icosahedron (globe) ── */
+    const icoGeo = new THREE.IcosahedronGeometry(1.5, 4);
+    const icoMat = new THREE.MeshStandardMaterial({
+      color: 0x28264b,
+      roughness: 0.3,
+      metalness: 0.85,
+      transparent: true,
+      opacity: 0.5,
+      wireframe: false,
+    });
+    const ico = new THREE.Mesh(icoGeo, icoMat);
+    scene.add(ico);
+
+    /* ── Wireframe overlay ── */
+    const wireGeo = new THREE.IcosahedronGeometry(1.52, 2);
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: 0x7b6fc4,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.15,
+    });
+    const wire = new THREE.Mesh(wireGeo, wireMat);
+    scene.add(wire);
+
+    /* ── Orbit rings ── */
+    function makeRing(radius: number, color: number) {
+      const geo = new THREE.TorusGeometry(radius, 0.012, 16, 120);
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = Math.PI / 2.5;
+      scene.add(mesh);
+      return mesh;
+    }
+    const ring1 = makeRing(2.3, 0xa40033);
+    const ring2 = makeRing(2.8, 0x7b6fc4);
+
+    /* ── Particles ── */
+    const PARTICLE_COUNT = 160;
+    const pGeo = new THREE.BufferGeometry();
+    const pPositions = new Float32Array(PARTICLE_COUNT * 3);
+    const pColors = new Float32Array(PARTICLE_COUNT * 3);
+    const palette = [
+      new THREE.Color(0xa40033),
+      new THREE.Color(0xc5c2d1),
+      new THREE.Color(0x28264b),
+      new THREE.Color(0x7b6fc4),
+      new THREE.Color(0x059669),
+    ];
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      pPositions[i * 3] = (Math.random() - 0.5) * 10;
+      pPositions[i * 3 + 1] = (Math.random() - 0.5) * 6;
+      pPositions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      pColors[i * 3] = c.r;
+      pColors[i * 3 + 1] = c.g;
+      pColors[i * 3 + 2] = c.b;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+
+    const pMat = new THREE.PointsMaterial({
+      size: 0.055,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      sizeAttenuation: true,
+    });
+    const particles = new THREE.Points(pGeo, pMat);
+    scene.add(particles);
+
+    /* ── Mouse parallax ── */
+    let mouseX = 0;
+    let mouseY = 0;
+    function onMouseMove(e: MouseEvent) {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    }
+    window.addEventListener('mousemove', onMouseMove);
+
+    /* ── Animate ── */
+    const clock = new THREE.Clock();
+    let animId = 0;
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // Globe rotation
+      ico.rotation.y = t * 0.15;
+      ico.rotation.z = Math.sin(t * 0.3) * 0.1;
+      wire.rotation.y = t * 0.12;
+      wire.rotation.z = Math.sin(t * 0.25) * 0.08;
+
+      // Float effect
+      ico.position.y = Math.sin(t * 0.8) * 0.15;
+      wire.position.y = ico.position.y;
+
+      // Rings
+      ring1.rotation.z = t * 0.08;
+      ring1.rotation.x = Math.PI / 2.5 + Math.sin(t * 0.4) * 0.12;
+      ring2.rotation.z = -t * 0.06;
+      ring2.rotation.x = Math.PI / 2.8 + Math.cos(t * 0.35) * 0.1;
+
+      // Particles slow rotation
+      particles.rotation.y = t * 0.025;
+      particles.rotation.x = t * 0.008;
+
+      // Camera parallax
+      camera.position.x += (mouseX * 0.3 - camera.position.x) * 0.02;
+      camera.position.y += (-mouseY * 0.3 - camera.position.y) * 0.02;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    /* ── Resize ── */
+    function onResize() {
+      if (!container) return;
+      const nw = container.clientWidth;
+      const nh = container.clientHeight;
+      camera.aspect = nw / nh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nw, nh);
+    }
+    window.addEventListener('resize', onResize);
+
+    /* ── Cleanup ── */
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('resize', onResize);
+      renderer.dispose();
+      icoGeo.dispose();
+      icoMat.dispose();
+      wireGeo.dispose();
+      wireMat.dispose();
+      pGeo.dispose();
+      pMat.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, []);
+
   return (
     <div
+      ref={containerRef}
       className="pointer-events-none absolute inset-0 z-0"
       aria-hidden="true"
       style={{ opacity: 0.85 }}
-    >
-      <Suspense fallback={null}>
-        <Canvas
-          camera={{ position: [0, 0, 5.5], fov: 45 }}
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true }}
-          style={{ background: 'transparent' }}
-        >
-          <Scene />
-        </Canvas>
-      </Suspense>
-    </div>
+    />
   );
 }
