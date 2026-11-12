@@ -48,3 +48,4 @@ export async function GET() {
     version: '2.1.0-wina',
   });
 }
+

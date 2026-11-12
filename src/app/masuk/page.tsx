@@ -45,14 +45,6 @@ export default function MasukPage() {
             </p>
           </div>
 
-          {/* Info panduan email resmi instansi */}
-          <div className="rounded-xl border border-navy/15 bg-white/80 p-3 text-[11px] text-navy/80 space-y-1">
-            <p className="font-bold text-navy">Informasi Otoritas Akun:</p>
-            <p>• <strong>Warga:</strong> Daftar atau masuk langsung menggunakan akun email pribadi.</p>
-            <p>• <strong>Petugas Lapangan:</strong> Khusus akun dinas terdaftar (<code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">petugas@surakarta.go.id</code> / OPD terkait).</p>
-            <p>• <strong>Administrator:</strong> Khusus email administrator pengelola sistem (<code className="bg-navy/10 px-1 py-0.5 rounded font-mono font-bold text-navy">admin@surakarta.go.id</code>).</p>
-          </div>
-
           {errorMsg && (
             <div className="p-3 bg-rose-100 border border-rose-300 text-crimson text-xs rounded-xl flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 shrink-0" />
