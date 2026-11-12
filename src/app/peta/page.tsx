@@ -249,44 +249,91 @@ export default function PetaPage() {
           </div>
         </Reveal>
 
-        {/* Kolom Kanan: Laporan yang sedang ditangani */}
+        {/* Kolom Kanan: Aktivitas Aduan & Ringkasan Spasial */}
         <Reveal delay={160} className="lg:col-span-4 space-y-4">
           <div className="bg-panel p-5 rounded-3xl shadow-[0_8px_24px_rgba(40,38,75,.14)] space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-navy" />
-                <h2 className="text-base font-bold text-navy">Laporan Sedang Ditangani</h2>
+                <h2 className="text-base font-bold text-navy">
+                  {laporanDiproses.length > 0 ? 'Laporan Sedang Ditangani' : 'Aduan Terkini di Lokasi'}
+                </h2>
               </div>
-              <span className="text-[11px] font-bold text-navy/70">
-                {jumlahDiproses} laporan
+              <span className="text-[11px] font-bold text-navy/70 bg-white/80 px-2 py-0.5 rounded-full border border-navy/10">
+                {laporanDiproses.length > 0 ? `${jumlahDiproses} diproses` : `${Math.min(3, totalTitik)} terbaru`}
               </span>
             </div>
 
-            {laporanDiproses.map((item) => (
-              <div key={item.id} className="bg-card p-4 rounded-2xl border border-navy/10 space-y-2">
-                <h3 className="text-xs font-extrabold text-navy">{item.judul}</h3>
-                <p className="text-[11px] text-navy/70">
-                  {item.kategori} · {item.kelurahan || item.kecamatan || 'Surakarta'}
+            {(laporanDiproses.length > 0 ? laporanDiproses : laporan.slice(0, 3)).map((item) => (
+              <div key={item.id} className="bg-white/90 p-3.5 rounded-2xl border border-navy/10 space-y-2 shadow-xs">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[10px] font-bold text-crimson uppercase tracking-wider">{item.kategori}</span>
+                  <span className={cn(
+                    'text-[9px] font-extrabold px-2 py-0.5 rounded-full text-white',
+                    item.status === 'selesai' ? 'bg-emerald-600' : item.status === 'sedang_ditangani' ? 'bg-amber-600' : 'bg-navy'
+                  )}>
+                    {item.status === 'selesai' ? 'Selesai' : item.status === 'sedang_ditangani' ? 'Diproses' : 'Masuk'}
+                  </span>
+                </div>
+                <h3 className="text-xs font-extrabold text-navy line-clamp-1">{item.judul}</h3>
+                <p className="text-[11px] text-navy/70 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-navy/50 shrink-0" />
+                  {item.kelurahan || item.kecamatan || 'Surakarta'}
                 </p>
-                <Link
-                  href={`/riwayat?kode=${item.kode_lacak}`}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-crimson"
-                >
-                  Lihat laporan <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
+                <div className="pt-1.5 border-t border-navy/5 flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold text-navy/60">#{item.kode_lacak}</span>
+                  <Link
+                    href={`/riwayat?kode=${item.kode_lacak}`}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-crimson hover:underline"
+                  >
+                    Buka Riwayat <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
               </div>
             ))}
-            {laporanDiproses.length === 0 && (
-              <p className="rounded-2xl bg-card p-4 text-sm text-navy/70">
-                Belum ada laporan berstatus sedang ditangani.
+
+            {laporan.length === 0 && (
+              <p className="rounded-2xl bg-white/80 p-4 text-sm text-navy/70">
+                Belum ada laporan yang tercatat di peta.
               </p>
             )}
 
             <Link
               href="/papan-tanggap"
-              className="w-full py-2.5 bg-slate-card text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-95 transition-all text-center"
+              className="w-full py-2.5 bg-navy hover:bg-slate text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all text-center shadow-sm"
             >
               Buka Papan Tanggap
+            </Link>
+          </div>
+
+          {/* Kotak Ringkasan Spasial & Standar Pelayanan (mengisi ruang agar padat) */}
+          <div className="bg-panel p-5 rounded-3xl shadow-[0_8px_24px_rgba(40,38,75,.14)] space-y-3">
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-navy/70">
+              Indikator Geospasial Kota
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-white/80 p-3 rounded-2xl border border-navy/10">
+                <span className="text-[10px] font-bold text-navy/50 uppercase block">Total Terpetakan</span>
+                <span className="text-xl font-black text-navy mt-0.5 block">{totalTitik} Titik</span>
+              </div>
+              <div className="bg-white/80 p-3 rounded-2xl border border-navy/10">
+                <span className="text-[10px] font-bold text-navy/50 uppercase block">Respon Siaga</span>
+                <span className="text-xl font-black text-emerald-700 mt-0.5 block">24 Jam</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-navy/10 bg-white/80 p-3 text-xs space-y-1">
+              <p className="text-[10px] font-bold uppercase text-navy/60">Pusat Bantuan & Lapor</p>
+              <p className="text-[11px] text-navy/80 leading-relaxed">
+                Temukan kerusakan di jalan atau fasilitas umum? Tandai langsung di peta untuk penanganan cepat oleh DPUPR & Dishub Surakarta.
+              </p>
+            </div>
+
+            <Link
+              href="/lapor"
+              className="w-full py-2.5 bg-crimson hover:bg-[#8a002b] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all text-center shadow-md"
+            >
+              <MapPin className="w-3.5 h-3.5" /> + Lapor Kerusakan Fasilitas
             </Link>
           </div>
         </Reveal>

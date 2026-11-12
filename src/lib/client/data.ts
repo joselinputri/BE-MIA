@@ -109,7 +109,10 @@ const mockLaporanAwal = laporanMock as unknown as Laporan[];
 
 /* ── API Dashboard ── */
 
-export async function getDashboard(): Promise<Dashboard> {
+let cachedDashboard: Dashboard | null = null;
+let cachedDashboardAt = 0;
+
+export async function getDashboard(forceFresh = false): Promise<Dashboard> {
   if (USE_MOCK) {
     return {
       ringkasan: dashboardMock.ringkasan as Ringkasan,
@@ -117,6 +120,11 @@ export async function getDashboard(): Promise<Dashboard> {
       konfirmasi: dashboardMock.konfirmasi as Konfirmasi,
       dariMock: true,
     };
+  }
+
+  // Kembalikan cache instan jika usia data < 30 detik untuk rendering instan
+  if (!forceFresh && cachedDashboard && Date.now() - cachedDashboardAt < 30_000) {
+    return cachedDashboard;
   }
 
   try {
@@ -152,13 +160,18 @@ export async function getDashboard(): Promise<Dashboard> {
         ? (resKonfirmasi.value as Konfirmasi)
         : (dashboardMock.konfirmasi as Konfirmasi);
 
-    return {
+    const hasil: Dashboard = {
       ringkasan,
       tren,
       konfirmasi,
       dariMock: !ringkasanRaw,
     };
+
+    cachedDashboard = hasil;
+    cachedDashboardAt = Date.now();
+    return hasil;
   } catch (error) {
+    if (cachedDashboard) return cachedDashboard;
     return {
       ringkasan: dashboardMock.ringkasan as Ringkasan,
       tren: dashboardMock.tren as Tren[],

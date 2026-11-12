@@ -396,25 +396,31 @@ export default function Beranda() {
           </div>
 
           {/* Right: Update Layanan */}
-          <div className="flex flex-col gap-4 lg:col-span-2">
-            <h2 className="text-lg font-bold text-white">Update Layanan</h2>
+          <div className="flex flex-col gap-3.5 lg:col-span-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Update Layanan</h2>
+              <span className="text-[11px] font-bold text-white/70 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+                {laporanTersaring.length} Laporan
+              </span>
+            </div>
+
             {laporanTerkini.map((laporan, i) => {
               const statusSelesai = laporan.status === 'selesai';
               const statusBerjalan = laporan.status === 'sedang_ditangani';
-                const status = statusSelesai ? 'Selesai'
-                  : statusBerjalan ? 'Sedang ditangani'
-                    : laporan.status === 'ditinjau' ? 'Ditinjau'
-                      : laporan.status === 'ditolak' ? 'Ditolak'
-                        : laporan.status === 'dibuka_ulang' ? 'Dibuka ulang'
-                          : 'Menunggu tindak lanjut';
-                const statusWarna = statusSelesai ? 'bg-emerald-700'
-                  : statusBerjalan ? 'bg-amber-700'
-                    : laporan.status === 'ditolak' ? 'bg-crimson'
-                      : 'bg-navy';
+              const status = statusSelesai ? 'Selesai'
+                : statusBerjalan ? 'Sedang ditangani'
+                  : laporan.status === 'ditinjau' ? 'Ditinjau'
+                    : laporan.status === 'ditolak' ? 'Ditolak'
+                      : laporan.status === 'dibuka_ulang' ? 'Dibuka ulang'
+                        : 'Menunggu tindak lanjut';
+              const statusWarna = statusSelesai ? 'bg-emerald-700'
+                : statusBerjalan ? 'bg-amber-700'
+                  : laporan.status === 'ditolak' ? 'bg-crimson'
+                    : 'bg-navy';
 
               return (
                 <Reveal key={laporan.id} delay={300 + i * 80}>
-                  <Kartu className="flex flex-col gap-2 border border-navy/10 !bg-white p-4 shadow-sm">
+                  <Kartu className="flex flex-col gap-2 border border-navy/10 !bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between gap-2">
                       <Pil className="bg-crimson text-white">
                         {laporan.dinas_singkatan || laporan.kategori}
@@ -423,10 +429,10 @@ export default function Beranda() {
                         {new Date(laporan.created_at).toLocaleDateString('id-ID')}
                       </span>
                     </div>
-                    <p className="text-sm font-bold leading-snug text-navy">{laporan.judul}</p>
-                    <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold leading-snug text-navy line-clamp-2">{laporan.judul}</p>
+                    <div className="flex items-center justify-between pt-1 border-t border-navy/5">
                       <span className="text-[10px] font-medium text-navy/70">{laporan.kelurahan || laporan.kecamatan || 'Surakarta'}</span>
-                      <Pil className={cn('text-white', statusWarna)}>{status}</Pil>
+                      <Pil className={cn('text-white text-[10px]', statusWarna)}>{status}</Pil>
                     </div>
                   </Kartu>
                 </Reveal>
@@ -437,9 +443,31 @@ export default function Beranda() {
                 {laporanLoading ? 'Memuat laporan…' : laporanError ? 'Laporan belum dapat dimuat.' : 'Belum ada laporan yang tercatat untuk filter ini.'}
               </Kartu>
             )}
+
+            {/* Kotak Info Respon Reaksi Cepat & Kontak Siaga (mengisi ruang agar padat) */}
+            <div className="rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-4 text-white space-y-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/70">Standar Respon OPD</span>
+                <span className="text-[9px] font-extrabold bg-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30">Siaga 24 Jam</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                  <p className="text-[10px] text-white/70 font-bold uppercase">Call Center</p>
+                  <p className="text-sm font-black text-white mt-0.5">112 (Bebas Pulsa)</p>
+                </div>
+                <div className="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                  <p className="text-[10px] text-white/70 font-bold uppercase">Target SLA</p>
+                  <p className="text-sm font-black text-amber-300 mt-0.5">&le; 24 Jam Kerja</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-white/80 leading-snug">
+                Semua perbaikan infrastruktur publik wajib menyertakan foto perbandingan sebelum dan sesudah yang diverifikasi oleh warga pelapor.
+              </p>
+            </div>
+
             <Link
               href="/lapor"
-              className={cn(tombolDasar, 'bg-crimson mt-auto w-full justify-center text-white hover:bg-crimson/90')}
+              className={cn(tombolDasar, 'bg-crimson mt-auto w-full justify-center text-white hover:bg-crimson/90 shadow-md py-3')}
               aria-label="Tambah titik aduan baru"
             >
               <MapPin className="h-4 w-4" />

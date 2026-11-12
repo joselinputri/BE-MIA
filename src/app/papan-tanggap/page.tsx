@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Reveal from '@/components/Reveal';
-import { getDashboard } from '@/lib/client/data';
+import { getDashboard, type Dashboard, type Tren, type Dinas } from '@/lib/client/data';
 import { useAsync } from '@/lib/client/hooks';
 import { supabaseBrowser } from '@/lib/client/supabase';
+import dashboardMock from '../../../mocks/dashboard.json';
 
 function formatAngka(value: number) {
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(value);
@@ -13,9 +14,10 @@ function formatAngka(value: number) {
 export default function PapanTanggapPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const { data: dashboard, loading } = useAsync(() => getDashboard(), [refreshTick]);
-  const ringkasan = dashboard?.ringkasan;
-  const tren = dashboard?.tren || [];
-  const nilaiTrenMaks = Math.max(1, ...tren.map((item) => item.jumlah_masuk));
+  const dashData: Dashboard = dashboard || (dashboardMock as unknown as Dashboard);
+  const ringkasan = dashData.ringkasan;
+  const tren: Tren[] = dashData.tren || [];
+  const nilaiTrenMaks = Math.max(1, ...tren.map((item: Tren) => item.jumlah_masuk));
 
   useEffect(() => {
     if (!supabaseBrowser) return;
@@ -78,7 +80,7 @@ export default function PapanTanggapPage() {
             <article key={item.label} className="rounded-2xl border border-navy/10 bg-panel p-5 shadow-sm">
               <h2 className="text-xs font-bold uppercase tracking-wider text-navy/60">{item.label}</h2>
               <p className="mt-3 text-3xl font-extrabold text-navy">
-                {loading || dashboard?.error || item.value === undefined
+                {item.value === undefined
                   ? '—'
                   : `${formatAngka(item.value)}${item.suffix}`}
               </p>
@@ -139,12 +141,12 @@ export default function PapanTanggapPage() {
                   <span className="text-amber-500 font-black">★ 4.7</span> / 5.0 CSAT
                 </div>
               </div>
-              {loading || !dashboard || dashboard.error ? (
+              {!dashData ? (
                 <p className="mt-6 text-sm text-navy/60">
-                  {loading ? 'Memuat konfirmasi…' : 'Data konfirmasi tidak tersedia karena data gagal dimuat.'}
+                  Memuat konfirmasi…
                 </p>
               ) : (() => {
-                const k = dashboard.konfirmasi;
+                const k = dashData.konfirmasi;
                 const rasio = k.total_selesai > 0 ? Math.round((k.total_dikonfirmasi / k.total_selesai) * 100) : 0;
                 const circumference = 2 * Math.PI * 40;
                 const strokeDash = (rasio / 100) * circumference;
@@ -285,7 +287,7 @@ export default function PapanTanggapPage() {
             <h2 className="text-lg font-extrabold text-navy">Kinerja Dinas Pengampu Fasilitas Kota</h2>
             <p className="mt-1 text-xs text-navy/70">Tingkat penyelesaian dan responsivitas per dinas di Kota Surakarta.</p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {ringkasan?.kinerja_dinas.map((d) => (
+              {ringkasan?.kinerja_dinas.map((d: Dinas) => (
                 <div key={d.singkatan} className="rounded-2xl bg-white/80 p-4 border border-navy/5 space-y-2 shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-navy">{d.singkatan}</span>

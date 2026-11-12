@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -49,12 +49,14 @@ function cekIndikasiSpam(laporan?: Laporan | null): boolean {
 
 function RiwayatContent() {
   const searchParams = useSearchParams();
-  const initialKode = searchParams.get('kode') || 'RMP-2025-088';
+  const kodeDariUrl = searchParams.get('kode');
 
   const { data: allLaporan } = useAsync(getLaporanPublik, []);
-  const [activeKode, setActiveKode] = useState<string>(initialKode);
+  const [activeKode, setActiveKode] = useState<string>(kodeDariUrl || '');
   const [activeTicket, setActiveTicket] = useState<Laporan | null>(null);
   const [searchInput, setSearchInput] = useState<string>('');
+  const [filterWilayah, setFilterWilayah] = useState<string>('Semua');
+  const [filterStatus, setFilterStatus] = useState<string>('Semua');
   const [rating, setRating] = useState<number>(5);
   const [konfirmasiStatus, setKonfirmasiStatus] = useState<'idle' | 'selesai' | 'revisi'>('idle');
   const [jumlahDukungan, setJumlahDukungan] = useState<number>(0);
@@ -155,7 +157,59 @@ function RiwayatContent() {
     }
   };
 
+  const filteredLaporan = useMemo(() => {
+    if (!allLaporan) return [];
+    return allLaporan.filter((lap) => {
+      // Filter wilayah
+      if (filterWilayah !== 'Semua') {
+        const wil = `${lap.kecamatan || ''} ${lap.kelurahan || ''}`.toLowerCase();
+        if (!wil.includes(filterWilayah.toLowerCase())) return false;
+      }
+      // Filter status
+      if (filterStatus !== 'Semua') {
+        if (filterStatus === 'masuk' && lap.status !== 'masuk') return false;
+        if (filterStatus === 'sedang_ditangani' && lap.status !== 'sedang_ditangani' && lap.status !== 'ditinjau' && lap.status !== 'diproses') return false;
+        if (filterStatus === 'selesai' && lap.status !== 'selesai') return false;
+      }
+      // Filter search
+      if (searchInput.trim()) {
+        const q = searchInput.trim().toLowerCase();
+        const cocokKode = lap.kode_lacak?.toLowerCase().includes(q);
+        const cocokJudul = lap.judul?.toLowerCase().includes(q);
+        const cocokWil = `${lap.kecamatan || ''} ${lap.kelurahan || ''}`.toLowerCase().includes(q);
+        if (!cocokKode && !cocokJudul && !cocokWil) return false;
+      }
+      return true;
+    });
+  }, [allLaporan, filterWilayah, filterStatus, searchInput]);
+
+  // Set initial active ticket from URL or first available report
   useEffect(() => {
+    if (!allLaporan || allLaporan.length === 0) return;
+    if (kodeDariUrl) {
+      const matchUrl = allLaporan.find((l) => l.kode_lacak?.toLowerCase() === kodeDariUrl.toLowerCase());
+      if (matchUrl) {
+        setActiveKode(matchUrl.kode_lacak);
+        return;
+      }
+    }
+    if (!activeKode) {
+      setActiveKode(allLaporan[0].kode_lacak);
+    }
+  }, [allLaporan, kodeDariUrl]);
+
+  // Sync activeKode with filteredLaporan when filter changes
+  useEffect(() => {
+    if (filteredLaporan.length > 0) {
+      const match = filteredLaporan.find((l) => l.kode_lacak === activeKode);
+      if (!match) {
+        setActiveKode(filteredLaporan[0].kode_lacak);
+      }
+    }
+  }, [filteredLaporan]);
+
+  useEffect(() => {
+    if (!activeKode) return;
     let aktif = true;
     setActiveTicket(null);
     setAksiNotice(null);
@@ -174,7 +228,23 @@ function RiwayatContent() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchInput.trim()) return;
-    setActiveKode(searchInput.trim().toUpperCase());
+    const found = (allLaporan || []).find((l) =>
+      l.kode_lacak?.toLowerCase().includes(searchInput.trim().toLowerCase())
+    );
+    if (found) {
+      setActiveKode(found.kode_lacak);
+      setFilterStatus('Semua');
+      setFilterWilayah('Semua');
+    }
+  };
+
+  const handleResetFilter = () => {
+    setFilterWilayah('Semua');
+    setFilterStatus('Semua');
+    setSearchInput('');
+    if (allLaporan && allLaporan.length > 0) {
+      setActiveKode(allLaporan[0].kode_lacak);
+    }
   };
 
   const handleDukung = async () => {
@@ -247,20 +317,28 @@ function RiwayatContent() {
             </div>
 
             <div className="flex gap-2">
-              <select className="bg-white border border-navy/15 rounded-xl px-3 py-2.5 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-crimson">
-                <option>Wilayah: Semua</option>
-                <option>Wilayah: Laweyan</option>
-                <option>Wilayah: Banjarsari</option>
-                <option>Wilayah: Jebres</option>
-                <option>Wilayah: Serengan</option>
-                <option>Wilayah: Pasar Kliwon</option>
+              <select
+                value={filterWilayah}
+                onChange={(e) => setFilterWilayah(e.target.value)}
+                className="bg-white border border-navy/15 rounded-xl px-3 py-2.5 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-crimson cursor-pointer"
+              >
+                <option value="Semua">Wilayah: Semua</option>
+                <option value="Laweyan">Wilayah: Laweyan</option>
+                <option value="Banjarsari">Wilayah: Banjarsari</option>
+                <option value="Jebres">Wilayah: Jebres</option>
+                <option value="Serengan">Wilayah: Serengan</option>
+                <option value="Pasar Kliwon">Wilayah: Pasar Kliwon</option>
               </select>
 
-              <select className="bg-white border border-navy/15 rounded-xl px-3 py-2.5 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-crimson">
-                <option>Semua Status</option>
-                <option>Baru</option>
-                <option>Diproses</option>
-                <option>Selesai</option>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="bg-white border border-navy/15 rounded-xl px-3 py-2.5 text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-crimson cursor-pointer"
+              >
+                <option value="Semua">Semua Status</option>
+                <option value="masuk">Baru</option>
+                <option value="sedang_ditangani">Diproses</option>
+                <option value="selesai">Selesai</option>
               </select>
 
               <button
@@ -275,7 +353,7 @@ function RiwayatContent() {
           {/* Pintas Laporan */}
           <div className="flex items-center gap-2 overflow-x-auto text-xs pt-1 pb-0.5 scrollbar-none">
             <span className="text-[11px] font-bold text-navy/60 uppercase shrink-0">Pintas Laporan:</span>
-            {(allLaporan || []).slice(0, 3).map((laporan) => (
+            {filteredLaporan.slice(0, 4).map((laporan) => (
               <button
                 key={laporan.id}
                 type="button"
@@ -290,6 +368,15 @@ function RiwayatContent() {
                 #{laporan.kode_lacak} &bull; {laporan.judul}
               </button>
             ))}
+            {filteredLaporan.length === 0 && (
+              <button
+                type="button"
+                onClick={handleResetFilter}
+                className="px-2.5 py-1 text-xs font-bold text-crimson hover:underline"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
         </div>
       </Reveal>
@@ -307,106 +394,13 @@ function RiwayatContent() {
                   <h2 className="text-base font-extrabold text-navy">Tiket Pengawasan</h2>
                 </div>
                 <span className="text-[11px] font-bold bg-crimson text-white px-2.5 py-0.5 rounded-full">
-                  {allLaporan?.length || 0} Laporan
+                  {filteredLaporan.length} Laporan
                 </span>
               </div>
 
               {/* List Tiket Mini */}
               <div className="space-y-3">
-                {USE_MOCK && (
-                  <>
-                {/* Tiket 1 */}
-                <button
-                  type="button"
-                  onClick={() => setActiveKode('RMP-2025-088')}
-                  className={cn(
-                    'w-full text-left p-3.5 rounded-2xl border transition-all',
-                    activeKode === 'RMP-2025-088'
-                      ? 'bg-card border-crimson/50 shadow-md ring-2 ring-crimson/20'
-                      : 'bg-white/80 border-navy/10 hover:bg-white'
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-mono font-bold text-navy">#RMP-2025-088</span>
-                    <span className="text-[10px] font-extrabold bg-crimson text-white px-2 py-0.5 rounded">
-                      Menunggu Anda
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-extrabold text-navy leading-snug line-clamp-1">
-                    Jalan Berlubang Aspal Ambles (Kedalaman 12cm)
-                  </h3>
-                  <p className="text-[11px] text-navy/70 mt-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-crimson shrink-0" />
-                    Jl. Dr. Radjiman No. 410, Laweyan
-                  </p>
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-navy/10 text-[10px] text-navy/60 font-semibold">
-                    <span>DPUPR Kota Surakarta</span>
-                    <span className="text-crimson font-bold">Tahap 4 dari 5</span>
-                  </div>
-                </button>
-
-                {/* Tiket 2 */}
-                <button
-                  type="button"
-                  onClick={() => setActiveKode('RMP-2025-094')}
-                  className={cn(
-                    'w-full text-left p-3.5 rounded-2xl border transition-all',
-                    activeKode === 'RMP-2025-094'
-                      ? 'bg-card border-crimson/50 shadow-md ring-2 ring-crimson/20'
-                      : 'bg-white/80 border-navy/10 hover:bg-white'
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-mono font-bold text-navy">#RMP-2025-094</span>
-                    <span className="text-[10px] font-extrabold bg-amber-500 text-white px-2 py-0.5 rounded">
-                      Sedang Dikerjakan
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-extrabold text-navy leading-snug line-clamp-1">
-                    Lampu PJU Padam 4 Titik
-                  </h3>
-                  <p className="text-[11px] text-navy/70 mt-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
-                    Jl. Kolonel Sutarto, Jebres
-                  </p>
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-navy/10 text-[10px] text-navy/60 font-semibold">
-                    <span>Dishub Surakarta</span>
-                    <span className="text-navy font-bold">Tahap 3 dari 5</span>
-                  </div>
-                </button>
-
-                {/* Tiket 3 */}
-                <button
-                  type="button"
-                  onClick={() => setActiveKode('RMP-2025-102')}
-                  className={cn(
-                    'w-full text-left p-3.5 rounded-2xl border transition-all',
-                    activeKode === 'RMP-2025-102'
-                      ? 'bg-card border-crimson/50 shadow-md ring-2 ring-crimson/20'
-                      : 'bg-white/80 border-navy/10 hover:bg-white'
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-mono font-bold text-navy">#RMP-2025-102</span>
-                    <span className="text-[10px] font-extrabold bg-peri text-white px-2 py-0.5 rounded">
-                      Verifikasi Lapangan
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-extrabold text-navy leading-snug line-clamp-1">
-                    Sedimen Drainase Meluap
-                  </h3>
-                  <p className="text-[11px] text-navy/70 mt-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate shrink-0" />
-                    Simpang Pasar Kembang, Serengan
-                  </p>
-                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-navy/10 text-[10px] text-navy/60 font-semibold">
-                    <span>DPUPR & DLH</span>
-                    <span className="text-navy font-bold">Tahap 2 dari 5</span>
-                  </div>
-                </button>
-                  </>
-                )}
-                {!USE_MOCK && (allLaporan || []).map((laporan) => (
+                {filteredLaporan.map((laporan) => (
                   <button
                     key={laporan.id}
                     type="button"
@@ -426,7 +420,10 @@ function RiwayatContent() {
                             Perlu Verifikasi
                           </span>
                         )}
-                        <span className="text-[10px] font-extrabold bg-slate text-white px-2 py-0.5 rounded">
+                        <span className={cn(
+                          'text-[10px] font-extrabold px-2 py-0.5 rounded text-white',
+                          laporan.status === 'selesai' ? 'bg-emerald-700' : laporan.status === 'sedang_ditangani' ? 'bg-amber-600' : 'bg-navy'
+                        )}>
                           {laporan.status.replace(/_/g, ' ')}
                         </span>
                       </div>
@@ -438,10 +435,20 @@ function RiwayatContent() {
                     </p>
                   </button>
                 ))}
-                {!USE_MOCK && (allLaporan || []).length === 0 && (
-                  <p className="rounded-2xl bg-white/80 p-4 text-sm text-navy/70">
-                    Belum ada laporan tersimpan.
-                  </p>
+
+                {filteredLaporan.length === 0 && (
+                  <div className="rounded-2xl bg-white/80 p-5 text-center space-y-3 border border-navy/10">
+                    <p className="text-xs text-navy/70 font-semibold leading-relaxed">
+                      Tidak ada aduan berstatus &quot;{filterStatus}&quot; di wilayah &quot;{filterWilayah}&quot;.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleResetFilter}
+                      className="px-4 py-2 bg-crimson hover:bg-[#8a002b] text-white text-xs font-bold rounded-xl transition shadow-xs"
+                    >
+                      Reset Filter
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -523,11 +530,25 @@ function RiwayatContent() {
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight leading-tight">
-                  {currentLap?.judul || 'Laporan tidak ditemukan'}
+                  {currentLap?.judul || (filteredLaporan.length === 0 ? 'Tidak Ada Laporan Sesuai Filter' : 'Laporan tidak ditemukan')}
                 </h2>
                 <p className="text-xs sm:text-sm text-navy/80 leading-relaxed font-medium">
-                  {currentLap?.deskripsi || 'Periksa kembali kode lacak atau coba lagi setelah data berhasil dimuat.'}
+                  {currentLap?.deskripsi || (filteredLaporan.length === 0
+                    ? `Tidak ada aduan berstatus "${filterStatus === 'masuk' ? 'Baru' : filterStatus === 'sedang_ditangani' ? 'Diproses' : filterStatus === 'selesai' ? 'Selesai' : filterStatus}" di wilayah "${filterWilayah}". Silakan ubah filter atau tekan tombol Reset Filter.`
+                    : 'Periksa kembali kode lacak atau coba lagi setelah data berhasil dimuat.')}
                 </p>
+
+                {!currentLap && filteredLaporan.length === 0 && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleResetFilter}
+                      className="px-4 py-2 bg-crimson hover:bg-[#8a002b] text-white text-xs font-bold rounded-xl transition shadow-xs"
+                    >
+                      Reset Filter & Tampilkan Semua
+                    </button>
+                  </div>
+                )}
 
                 {/* ── Transparansi / Kartu Inspeksi AI Gemini 3.5 ── */}
                 {currentLap && <KartuInspeksiAI laporan={currentLap} />}
