@@ -42,32 +42,23 @@ export async function GET(req: NextRequest) {
     const mulaiBulan = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const akhirBulan = now.toISOString();
 
-    // Query dinamis: jika sumber = asli maka filter is_simulasi = false, jika semua maka ambil semua
+    // Hitung hanya aduan yang masuk langsung / asli dari warga (is_simulasi = false)
     let totalQuery = supabaseAdmin
       .from('laporan_publik')
       .select('id', { count: 'exact', head: true })
-      .gte('created_at', mulaiBulan)
-      .lte('created_at', akhirBulan);
+      .eq('is_simulasi', false);
 
     let selesaiQuery = supabaseAdmin
       .from('laporan_publik')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'selesai')
-      .gte('created_at', mulaiBulan)
-      .lte('created_at', akhirBulan);
+      .eq('is_simulasi', false)
+      .eq('status', 'selesai');
 
     let dikerjakanQuery = supabaseAdmin
       .from('laporan_publik')
       .select('id', { count: 'exact', head: true })
-      .in('status', ['ditinjau', 'sedang_ditangani'])
-      .gte('created_at', mulaiBulan)
-      .lte('created_at', akhirBulan);
-
-    if (sumber === 'asli') {
-      totalQuery = totalQuery.eq('is_simulasi', false);
-      selesaiQuery = selesaiQuery.eq('is_simulasi', false);
-      dikerjakanQuery = dikerjakanQuery.eq('is_simulasi', false);
-    }
+      .eq('is_simulasi', false)
+      .in('status', ['ditinjau', 'sedang_ditangani']);
 
     const [total, selesai, dikerjakan, dinasRes, laporanRes] = await Promise.all([
       totalQuery,

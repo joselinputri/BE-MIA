@@ -99,21 +99,21 @@ export async function PATCH(
     const aksi = body.aksi; // 'verifikasi_sah' | 'tolak_spam'
 
     if (aksi === 'verifikasi_sah') {
-      const { catatan_teknis } = body;
       const payload: Record<string, any> = {
         penanda: [],
         status: 'sedang_ditangani',
         updated_at: new Date().toISOString(),
       };
 
-      if (catatan_teknis && typeof catatan_teknis === 'object') {
-        payload.catatan_teknis = catatan_teknis;
-      }
-
-      await supabaseAdmin
+      const { error: errUpd } = await supabaseAdmin
         .from('laporan')
         .update(payload)
         .eq('id', laporanId);
+
+      if (errUpd) {
+        console.error('[admin/verifikasi_sah] Update error:', errUpd.message);
+        return apiError('INTERNAL_ERROR', `Gagal mengubah status laporan: ${errUpd.message}`);
+      }
 
       await supabaseAdmin.from('status_history').insert({
         laporan_id: laporanId,
