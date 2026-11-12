@@ -30,14 +30,14 @@ export async function GET(req: NextRequest) {
     });
 
     const res = data?.[0] || {
-      total_selesai: 145,
-      total_dikonfirmasi: 128,
-      persen_dikonfirmasi: 88.2,
-      persen_puas: 89.5,
-      persen_biasa: 8.2,
-      persen_kurang_puas: 2.3,
-      total_dibuka_ulang: 4,
-      persen_dibuka_ulang: 2.7,
+      total_selesai: 0,
+      total_dikonfirmasi: 0,
+      persen_dikonfirmasi: 0,
+      persen_puas: 0,
+      persen_biasa: 0,
+      persen_kurang_puas: 0,
+      total_dibuka_ulang: 0,
+      persen_dibuka_ulang: 0,
     };
 
     return apiSukses(res, {

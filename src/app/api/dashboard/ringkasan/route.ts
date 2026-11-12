@@ -101,14 +101,14 @@ export async function GET(req: NextRequest) {
 
     const kinerjaDinas = dinasList.map((d) => {
       const s = dinasStats[d.id];
-      const persen = s && s.total > 0 ? Number(((s.selesai / s.total) * 100).toFixed(1)) : 89.2;
+      const persen = s && s.total > 0 ? Number(((s.selesai / s.total) * 100).toFixed(1)) : 0;
       const avgHari = s && s.durasiHari.length > 0
         ? Number((s.durasiHari.reduce((a, b) => a + b, 0) / s.durasiHari.length).toFixed(1))
-        : 1.5;
+        : 0;
       return {
         singkatan: d.singkatan,
         nama: d.nama,
-        rata_hari: Math.max(0.8, avgHari),
+        rata_hari: avgHari,
         persen_tuntas: persen,
       };
     });
