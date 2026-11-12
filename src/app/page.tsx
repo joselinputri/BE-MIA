@@ -26,10 +26,6 @@ const ThreeGears = dynamic(() => import('@/components/ThreeGears'), {
   ),
 });
 
-const HeroScene3D = dynamic(() => import('@/components/HeroScene3D'), {
-  ssr: false,
-});
-
 interface SpeechRecognitionResultItem { transcript: string }
 interface SpeechRecognitionInstance {
   lang: string;
