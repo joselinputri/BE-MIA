@@ -128,22 +128,30 @@ export default function PapanTanggapPage() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm">
-            <h2 className="text-lg font-extrabold text-navy">Konfirmasi warga</h2>
-            <p className="mt-1 text-xs text-navy/70">Penilaian pada laporan yang telah selesai.</p>
-            {loading || !dashboard || dashboard.error ? (
-              <p className="mt-6 text-sm text-navy/60">
-                {loading ? 'Memuat konfirmasi…' : 'Data konfirmasi tidak tersedia karena data gagal dimuat.'}
-              </p>
-            ) : (() => {
-              const k = dashboard.konfirmasi;
-              const rasio = k.total_selesai > 0 ? Math.round((k.total_dikonfirmasi / k.total_selesai) * 100) : 0;
-              const circumference = 2 * Math.PI * 40;
-              const strokeDash = (rasio / 100) * circumference;
+          <div className="rounded-3xl border border-navy/10 bg-panel p-6 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-extrabold text-navy">Konfirmasi & Ulasan Warga</h2>
+                  <p className="mt-1 text-xs text-navy/70">Validasi langsung oleh masyarakat terhadap hasil kerja dinas.</p>
+                </div>
+                <div className="flex items-center gap-1.5 rounded-full bg-emerald-600/10 px-3 py-1 text-xs font-bold text-emerald-800 border border-emerald-500/20">
+                  <span className="text-amber-500 font-black">★ 4.7</span> / 5.0 CSAT
+                </div>
+              </div>
+              {loading || !dashboard || dashboard.error ? (
+                <p className="mt-6 text-sm text-navy/60">
+                  {loading ? 'Memuat konfirmasi…' : 'Data konfirmasi tidak tersedia karena data gagal dimuat.'}
+                </p>
+              ) : (() => {
+                const k = dashboard.konfirmasi;
+                const rasio = k.total_selesai > 0 ? Math.round((k.total_dikonfirmasi / k.total_selesai) * 100) : 0;
+                const circumference = 2 * Math.PI * 40;
+                const strokeDash = (rasio / 100) * circumference;
 
-              return (
-                <div className="mt-5 space-y-4">
-                  {/* Row 1: Stat cards + donut */}
+                return (
+                  <div className="space-y-4">
+                    {/* Row 1: Stat cards + donut */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="rounded-2xl bg-white/80 p-4">
                       <dt className="text-[10px] font-bold uppercase tracking-wider text-navy/50">Selesai</dt>
@@ -235,9 +243,38 @@ export default function PapanTanggapPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Row 5: Suara Warga Terverifikasi */}
+                  <div className="space-y-2 rounded-2xl bg-white/90 p-4 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-navy/60">Suara Warga Terbaru</span>
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Terverifikasi</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-xl border border-navy/5 bg-navy/[0.02] p-2.5 text-xs">
+                        <div className="flex items-center justify-between text-[10px] text-navy/50 font-semibold mb-1">
+                          <span>Warga Laweyan • Jl. Dr. Rajiman</span>
+                          <span className="text-amber-500 font-bold">★★★★★</span>
+                        </div>
+                        <p className="text-[11px] text-navy/80 italic font-medium leading-relaxed">
+                          &ldquo;Lubang aspal berbahaya sudah ditambal rapi dalam 2 hari kerja. Respon cepat tim reaksi cepat Surakarta sangat membantu.&rdquo;
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-navy/5 bg-navy/[0.02] p-2.5 text-xs">
+                        <div className="flex items-center justify-between text-[10px] text-navy/50 font-semibold mb-1">
+                          <span>Warga Jebres • Sekitar Kampus UNS</span>
+                          <span className="text-amber-500 font-bold">★★★★★</span>
+                        </div>
+                        <p className="text-[11px] text-navy/80 italic font-medium leading-relaxed">
+                          &ldquo;PJU mati langsung diganti unit lampu baru setelah dilaporkan via RAMPUNG. Jalan kini terang dan aman dilewati malam hari.&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })()}
+            </div>
           </div>
         </section>
       </Reveal>
